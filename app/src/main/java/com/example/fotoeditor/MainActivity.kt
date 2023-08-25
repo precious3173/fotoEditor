@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.window.SplashScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,8 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,10 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fotoeditor.ui.theme.FotoEditorTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +56,7 @@ fun NavigationController() {
     NavHost(navController = navController, startDestination = "splash_screen"){
 
      composable("splash_screen"){
-         splashScreen()
+         splashScreen(navController)
      }
         composable("main_screen"){
             
@@ -60,7 +65,13 @@ fun NavigationController() {
 }
 
 @Composable
-fun splashScreen() {
+fun splashScreen(navHostController: NavHostController) {
+
+  LaunchedEffect(key1 = true){
+
+      delay(3000L)
+      navHostController.navigate("main_screen")
+  }
     Column(modifier = Modifier
         .fillMaxSize()
         .background(Color.White),
@@ -69,11 +80,12 @@ fun splashScreen() {
     ) {
 
        Image(painter = painterResource(id = R.drawable.ic_baseline_photo_camera_24),
-           contentDescription = "Photo Editor", modifier = Modifier.width(100.dp)
-               .height(100.dp)
+           contentDescription = "Photo Editor", modifier = Modifier
+               .width(80.dp)
+               .height(80.dp)
 
        )
-     Text(text = "4to Editor", fontWeight = FontWeight.Medium, fontSize = 20.sp,
+     Text(text = "4to Editor", fontWeight = FontWeight.Medium, fontSize = 30.sp,
      color =  Color.Black, fontFamily = FontFamily.Default
      )
     }
