@@ -1,12 +1,20 @@
 package com.example.fotoeditor
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.drawable.DrawableContainer
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.window.SplashScreen
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,8 +45,10 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,11 +63,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fotoeditor.ui.theme.FotoEditorTheme
+import com.example.fotoeditor.ui.theme.SelectImage.AccessImage
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.delay
 
@@ -143,8 +155,47 @@ fun BottomBar(){
 
 @Composable
 fun FabCompose(context: Context) {
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){
+            isGranted: Boolean ->
+
+        if (isGranted){
+         Log.d(TAG,"Access granted")
+        }
+        else{
+            Log.d(TAG,"Access  not granted")
+        }
+    }
+
+    var  imageUri by remember {
+        mutableStateOf<Uri?>(null)}
+    val pickMedia= rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        // Callback is invoked after the user selects a media item or closes the
+
+        imageUri = uri
+        if (uri != null) {
+            Log.d("PhotoPicker", "Selected URI: $uri")
+        } else {
+            Log.d("PhotoPicker", "No media selected")
+        }
+    }
 FloatingActionButton(
-    onClick = { print("hello") },
+    onClick = {
+
+        when (PackageManager.PERMISSION_GRANTED){
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.READ_EXTERNAL_STORAGE
+            ) ->{
+
+                // Launch the photo picker and let the user choose only images.
+                pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+           else -> {
+               launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+           }
+        }
+
+    },
     interactionSource = remember {
         MutableInteractionSource()
     },
@@ -156,6 +207,7 @@ FloatingActionButton(
     Icon(Icons.Default.Add, contentDescription = null)
 }
 }
+
 
 @Composable
 fun BAB(context: Context) {
@@ -206,4 +258,5 @@ fun DefaultPreview() {
     FotoEditorTheme {
        NavigationController()
     }
+
 }
