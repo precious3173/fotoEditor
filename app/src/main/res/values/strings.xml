@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">fotoEditor</string>
+    <string name="tap_anywhere_to_open_a_photo">Tap anywhere to open a photo</string>
+    <string name="open">OPEN</string>
 </resources>
