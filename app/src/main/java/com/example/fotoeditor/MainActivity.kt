@@ -68,6 +68,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.fotoeditor.ui.screens.HomeRoute
 import com.example.fotoeditor.ui.theme.FotoEditorTheme
 import com.example.fotoeditor.ui.theme.SelectImage.AccessImage
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -83,7 +84,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                 NavigationController()
+                    NavigationController()
                 }
             }
         }
@@ -92,14 +93,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationController() {
-    val  navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "splash_screen"){
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "splash_screen") {
 
-     composable("splash_screen"){
-         splashScreen(navController)
-     }
-        composable("main_screen"){
-            BottomBar()
+        composable("splash_screen") {
+            splashScreen(navController)
+        }
+        composable("main_screen") {
+            HomeRoute()
         }
     }
 }
@@ -107,41 +108,44 @@ fun NavigationController() {
 @Composable
 fun splashScreen(navHostController: NavHostController) {
 
-  LaunchedEffect(key1 = true){
+    LaunchedEffect(key1 = true) {
 
-      delay(3000L)
-      navHostController.navigate("main_screen")
-  }
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White),
+        delay(3000L)
+        navHostController.navigate("main_screen")
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
 
-       Image(painter = painterResource(id = R.drawable.ic_baseline_photo_camera_24),
-           contentDescription = "Photo Editor", modifier = Modifier
-               .width(80.dp)
-               .height(80.dp)
+        Image(
+            painter = painterResource(id = R.drawable.ic_baseline_photo_camera_24),
+            contentDescription = "Photo Editor", modifier = Modifier
+                .width(80.dp)
+                .height(80.dp)
 
-       )
-     Text(text = "4to Editor", fontWeight = FontWeight.Medium, fontSize = 30.sp,
-     color =  Color.Black, fontFamily = FontFamily.Default
-     )
+        )
+        Text(
+            text = "4to Editor", fontWeight = FontWeight.Medium, fontSize = 30.sp,
+            color = Color.Black, fontFamily = FontFamily.Default
+        )
     }
 }
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun BottomBar(){
+fun BottomBar() {
     var context = LocalContext.current
 
     Scaffold(
-        floatingActionButton = {FabCompose(context)},
+        floatingActionButton = { FabCompose(context) },
         isFloatingActionButtonDocked = true,
         floatingActionButtonPosition = FabPosition.Center,
-        bottomBar = {BAB(context)}){
+        bottomBar = { BAB(context) }) {
 
         Column(
             modifier = Modifier
@@ -156,56 +160,58 @@ fun BottomBar(){
 @Composable
 fun FabCompose(context: Context) {
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){
-            isGranted: Boolean ->
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
 
-        if (isGranted){
-         Log.d(TAG,"Access granted")
-        }
-        else{
-            Log.d(TAG,"Access  not granted")
-        }
-    }
-
-    var  imageUri by remember {
-        mutableStateOf<Uri?>(null)}
-    val pickMedia= rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        // Callback is invoked after the user selects a media item or closes the
-
-        imageUri = uri
-        if (uri != null) {
-            Log.d("PhotoPicker", "Selected URI: $uri")
-        } else {
-            Log.d("PhotoPicker", "No media selected")
-        }
-    }
-FloatingActionButton(
-    onClick = {
-
-        when (PackageManager.PERMISSION_GRANTED){
-            ContextCompat.checkSelfPermission(
-                context, Manifest.permission.READ_EXTERNAL_STORAGE
-            ) ->{
-
-                // Launch the photo picker and let the user choose only images.
-                pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            if (isGranted) {
+                Log.d(TAG, "Access granted")
+            } else {
+                Log.d(TAG, "Access  not granted")
             }
-           else -> {
-               launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-           }
         }
 
-    },
-    interactionSource = remember {
-        MutableInteractionSource()
-    },
-    containerColor = colorResource(id = R.color.orange),
-    modifier = Modifier,
-    shape = CircleShape,
+    var imageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+    val pickMedia =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            // Callback is invoked after the user selects a media item or closes the
 
-    ) {
-    Icon(Icons.Default.Add, contentDescription = null)
-}
+            imageUri = uri
+            if (uri != null) {
+                Log.d("PhotoPicker", "Selected URI: $uri")
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+            }
+        }
+    FloatingActionButton(
+        onClick = {
+
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.READ_EXTERNAL_STORAGE
+                ) -> {
+
+                    // Launch the photo picker and let the user choose only images.
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+
+                else -> {
+                    launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+            }
+
+        },
+        interactionSource = remember {
+            MutableInteractionSource()
+        },
+        containerColor = colorResource(id = R.color.orange),
+        modifier = Modifier,
+        shape = CircleShape,
+
+        ) {
+        Icon(Icons.Default.Add, contentDescription = null)
+    }
 }
 
 
@@ -214,49 +220,52 @@ fun BAB(context: Context) {
     val selected = remember { mutableStateOf(BABIcons.MENU) }
     BottomAppBar(
         modifier = Modifier,
-    backgroundColor = Color(0xFFFFFFFF),
-    contentColor= contentColorFor(backgroundColor),
-    cutoutShape = RoundedCornerShape(50),
-    elevation= AppBarDefaults.BottomAppBarElevation,
-    contentPadding = AppBarDefaults.ContentPadding,
+        backgroundColor = Color(0xFFFFFFFF),
+        contentColor = contentColorFor(backgroundColor),
+        cutoutShape = RoundedCornerShape(50),
+        elevation = AppBarDefaults.BottomAppBarElevation,
+        contentPadding = AppBarDefaults.ContentPadding,
         content = {
-            Row (
+            Row(
                 modifier = Modifier.fillMaxWidth(1f),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
-            ){
-             Row (){
-                 IconButton(onClick = {
-                 selected.value = BABIcons.HOME })
-                 { 
-                     Icon(
-                   Icons.Default.Home,
-                   contentDescription = null
-               )
-             }
+            ) {
+                Row() {
+                    IconButton(onClick = {
+                        selected.value = BABIcons.HOME
+                    })
+                    {
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = null
+                        )
+                    }
 
-             }
-             Row (){
-                 IconButton(onClick = {
-                     selected.value = BABIcons.MENU })
-                 {
-                     Icon(
-                         painter = painterResource(id = R.drawable.baseline_menu_24),
-                         contentDescription = null
-                     )
-                 }
+                }
+                Row() {
+                    IconButton(onClick = {
+                        selected.value = BABIcons.MENU
+                    })
+                    {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_menu_24),
+                            contentDescription = null
+                        )
+                    }
 
-             }
+                }
             }
         }
-        )
+    )
 
 }
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     FotoEditorTheme {
-       NavigationController()
+        NavigationController()
     }
 
 }
