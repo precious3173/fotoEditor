@@ -21,6 +21,13 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
         when (event) {
             is HomeScreenEvent.ImportImage -> onImportImage(event.callback)
             is HomeScreenEvent.LoadImageUri -> onLoadImageUri(event.uri)
+            is HomeScreenEvent.ShowImageInfo -> onShowImageInfo(event.navigate)
+            is HomeScreenEvent.ToggleLooks -> onToggleLooks()
+            is HomeScreenEvent.ToggleTools -> onToggleTools()
+            is HomeScreenEvent.OnExportImage -> onShowExportMenu()
+            is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
+            is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
+            is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
         }
     }
 
@@ -39,8 +46,45 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             it.copy(
                 hasPhotoImported = true,
                 importedImageUri = uri,
+                shouldExpandLooks = true,
             )
         }
+    }
+
+    private fun onOpenOptionsMenu() {
+        _uiState.update { it.copy(shouldShowOptionsMenu = true) }
+    }
+
+    private fun onHideOptionsMenu() {
+        _uiState.update { it.copy(shouldShowOptionsMenu = false) }
+    }
+
+    private fun onShowExportMenu() {
+        if (_uiState.value.hasPhotoImported) {
+            _uiState.update { it.copy(shouldShowExportMenu = true) }
+        }
+    }
+
+    private fun onHideExportMenu() {
+        if (_uiState.value.hasPhotoImported) {
+            _uiState.update { it.copy(shouldShowExportMenu = false) }
+        }
+    }
+
+    private fun onToggleLooks() {
+        if (_uiState.value.hasPhotoImported) {
+            _uiState.update { it.copy(shouldExpandLooks = !_uiState.value.shouldExpandLooks) }
+        }
+    }
+
+    private fun onToggleTools() {
+        if (_uiState.value.hasPhotoImported) {
+            _uiState.update { it.copy(shouldExpandTools = !_uiState.value.shouldExpandTools) }
+        }
+    }
+
+    private fun onShowImageInfo(navigate: () -> Unit) {
+        navigate()
     }
 
 }
@@ -52,11 +96,13 @@ sealed interface HomeScreenEvent : Event {
     ) : HomeScreenEvent
 
     data class LoadImageUri(val uri: Uri) : HomeScreenEvent
-    object ShowImageInfo : HomeScreenEvent
+    data class ShowImageInfo(val navigate: () -> Unit) : HomeScreenEvent
     object OpenEditMenu : HomeScreenEvent
     object OpenOptionsMenu : HomeScreenEvent
+    object HideOptionsMenu : HomeScreenEvent
     object ToggleLooks : HomeScreenEvent
     object ToggleTools : HomeScreenEvent
     object OnExportImage : HomeScreenEvent
+    object HideExportMenu : HomeScreenEvent
 
 }

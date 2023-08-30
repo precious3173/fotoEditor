@@ -16,11 +16,12 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun SimpleTopAppBar(
+    modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().then(modifier),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
