@@ -15,27 +15,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-@Composable
-    fun setDropDownSetting() {
-        var expanded by remember { mutableStateOf(true) }
 
-            Column (modifier = Modifier
+@Composable
+fun setDropDownSetting() {
+    var expanded by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
             .wrapContentSize(Alignment.TopEnd)
-            .absolutePadding(top = 45.dp, right = 20.dp)){
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false
+            .absolutePadding(top = 45.dp, right = 20.dp)
+    ) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
             },
+        )
+        {
+            DropdownMenuItem(text = { Text("Settings") },
+                onClick = {
+                    expanded = false
+                }
             )
-            {
-                DropdownMenuItem(text = { Text("Settings") },
-                    onClick = { expanded = false
-                    }
-                )
 
-                DropdownMenuItem(text = { Text("Tutorials" ) },
-                    onClick = { expanded = false})
-                DropdownMenuItem(text = { Text("Help & Feedback" ) },
-                    onClick = { /*TODO*/ })
-            }
+            DropdownMenuItem(text = { Text("Tutorials") },
+                onClick = { expanded = false })
+            DropdownMenuItem(text = { Text("Help & Feedback") },
+                onClick = { /*TODO*/ })
         }
     }
+}
