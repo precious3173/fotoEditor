@@ -23,10 +23,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.magnifier
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +40,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
+import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.LooksBottomSheet
@@ -165,6 +172,9 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 shouldShowOptionsMenu = uiState.shouldShowOptionsMenu,
                 shouldExpandLooks = uiState.shouldExpandLooks,
                 importPhoto = importPhoto,
+                filterIsSelected = uiState.filterIsSelected,
+                selectedFilter = uiState.sendFilter
+
             )
         },
         bottomBar = {
@@ -178,6 +188,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             } else Color.Gray, label = "LooksTextColor"
                         )
                         Box(
+
                             Modifier
                                 .weight(1f)
                                 .clickable(
@@ -225,6 +236,8 @@ private fun HomeScreen(
     shouldShowOptionsMenu: Boolean,
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
+    filterIsSelected: Boolean,
+    selectedFilter: FloatArray?
 ) {
     val offset = 20
     AnimatedVisibility(
@@ -311,6 +324,7 @@ private fun HomeScreenContent(
 
             //with image imported
             true -> {
+                val context = LocalContext.current
                 Column(
                     Modifier
                         .fillMaxSize(),
@@ -325,23 +339,64 @@ private fun HomeScreenContent(
                             modifier = Modifier
                                 .animateContentSize()
                                 .weight(1f),
+                            colorFilter = ColorFilter.colorMatrix(
+                                ColorMatrix())
                         )
                     }
 
                     AnimatedVisibility(visible = shouldExpandLooks) {
                         LooksBottomSheet {
-                            repeat(10) {
+                            repeat(12) {index ->
+                               val filterName = when (index){
+                                   0  -> "Current"
+                                   1 -> "Portrait"
+                                   2 -> "Smooth"
+                                   3 -> "Pop"
+                                   4 -> "Accentuate"
+                                   5 -> "Faded Glow"
+                                   6 -> "Morning"
+                                   7 -> "Bright"
+                                   8 -> "Fine Art"
+                                   9 -> "Push"
+                                   10 -> "Structure"
+                                   11 -> "Silhouette"
+                                   else -> ""
+                               }
+
+
                                 Box(Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                    importedImageUri?.let {
-                                        AsyncImage(
-                                            model = it,
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .width(82.dp)
-                                                .height(96.dp),
-                                        )
+                                    Column(modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally) {
+                                        importedImageUri?.let {
+                                            AsyncImage(
+                                                model = it,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .width(82.dp)
+                                                    .height(96.dp)
+                                                    .selectable(
+                                                        selected = true,
+                                                        onClick = {
+                                                            if (index == 1) {
+                                                                Toast
+                                                                    .makeText(
+                                                                        context,
+                                                                        "First image",
+                                                                        Toast.LENGTH_SHORT
+                                                                    )
+                                                                    .show()
+                                                            }
+                                                        }
+                                                    ), colorFilter = ColorFilter.colorMatrix(
+                                                    ColorMatrix(
+                                                        SelectFilter(index)))
+                                            )
+                                        }
+                                        Text(text = filterName)
+
                                     }
+                                    
                                 }
                             }
                         }
@@ -352,6 +407,8 @@ private fun HomeScreenContent(
     }
 
 }
+
+
 
 data class BottomBarItem(
     val title: String,
