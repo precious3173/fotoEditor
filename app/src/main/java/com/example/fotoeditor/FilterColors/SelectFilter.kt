@@ -6,17 +6,17 @@ import androidx.compose.runtime.Composable
 fun SelectFilter (index: Int): FloatArray {
 
     val portrait = floatArrayOf(
-        1f, 1f, 0f, 0f, 0f,
-        0f, 1f, 0f, 0f, 0f,
-        0f, 0f, 1f, 0f, 0f,
-        0f, 0f, 0f, 1f, 0f
+        1.1f, 0f, 0f, 0f, 0.02f,
+        0f, 1.1f, 0f, 0f, 0.02f,
+        0f, 0f, 1.1f, 0f, 0.02f,
+        0f, 0f, 0f, 1.1f, 0f
     )
 
     val smooth = floatArrayOf(
-        1f, 0f, 0f, 0f, 0f,
-        0f, 1f, 0f, 0f, 0f,
-        0f, 1f, 1f, 0f, 0f,
-        0f, 0f, 0f, 0f, 1f
+        1f, 0.1f, 0.1f, 0.1f, 0f,
+        0.1f, 1f, 0.1f, 0f, 0f,
+        0f, 0f, 1f, 0f, 0f,
+        0f, 0f, 0f, 1f, 0f
     )
 
     val pop = floatArrayOf(
