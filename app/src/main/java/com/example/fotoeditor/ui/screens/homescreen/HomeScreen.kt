@@ -10,11 +10,9 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -28,7 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -54,6 +50,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -237,7 +234,7 @@ private fun HomeScreen(
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
     filterIsSelected: Boolean,
-    selectedFilter: FloatArray?
+    selectedFilter: Int?
 ) {
     val offset = 20
     AnimatedVisibility(
@@ -274,6 +271,9 @@ private fun HomeScreen(
             hasPhotoImported = hasPhotoImported,
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
+            selectedFilter = selectedFilter,
+            onEvent = onEvent
+
         )
     }
 }
@@ -284,6 +284,8 @@ private fun HomeScreenContent(
     hasPhotoImported: Boolean,
     importedImageUri: Uri?,
     shouldExpandLooks: Boolean,
+    selectedFilter: Int?,
+    onEvent: (Event) -> Unit,
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
@@ -340,7 +342,7 @@ private fun HomeScreenContent(
                                 .animateContentSize()
                                 .weight(1f),
                             colorFilter = ColorFilter.colorMatrix(
-                                ColorMatrix())
+                                ColorMatrix(SelectFilter(selectedFilter!!)))
                         )
                     }
 
@@ -378,14 +380,20 @@ private fun HomeScreenContent(
                                                     .selectable(
                                                         selected = true,
                                                         onClick = {
-                                                            if (index == 1) {
-                                                                Toast
-                                                                    .makeText(
-                                                                        context,
-                                                                        "First image",
-                                                                        Toast.LENGTH_SHORT
-                                                                    )
-                                                                    .show()
+                                                            when (index) {
+
+                                                                0 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                1-> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                2 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                3 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                4 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                5 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                6-> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                7 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                8 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                9 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                10 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
+                                                                11-> onEvent(HomeScreenEvent.FilterIsSelected(index))
                                                             }
                                                         }
                                                     ), colorFilter = ColorFilter.colorMatrix(

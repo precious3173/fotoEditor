@@ -11,5 +11,5 @@ data class HomeUiState(
     val shouldShowOptionsMenu: Boolean = false,
     var importedImageUri: Uri? = null,
     var filterIsSelected: Boolean = false,
-    var sendFilter: FloatArray? = null
+    var sendFilter: Int = 0
 )

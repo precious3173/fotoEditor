@@ -28,7 +28,7 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
-            is HomeScreenEvent.filterIsSelected -> onSelectFilter(event.floatArray)
+            is HomeScreenEvent.FilterIsSelected -> onSelectFilter(event.index)
         }
     }
 
@@ -52,9 +52,10 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
         }
     }
 
-    private fun onSelectFilter(floatArray: FloatArray) {
-        _uiState.update { it.copy(filterIsSelected = true,
-            sendFilter = floatArray) }
+    private fun onSelectFilter(index: Int) {
+        _uiState.update { it.copy(
+            filterIsSelected = true,
+            sendFilter = index) }
     }
     private fun onOpenOptionsMenu() {
         _uiState.update { it.copy(shouldShowOptionsMenu = true) }
@@ -110,6 +111,6 @@ sealed interface HomeScreenEvent : Event {
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
 
-    data class filterIsSelected(val floatArray: FloatArray) : HomeScreenEvent
+    data class FilterIsSelected(val index: Int) : HomeScreenEvent
 
 }
