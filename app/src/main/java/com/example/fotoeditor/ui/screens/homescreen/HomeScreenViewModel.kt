@@ -28,7 +28,7 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
-            is HomeScreenEvent.FilterIsSelected -> onSelectFilter(event.index)
+            is HomeScreenEvent.UpdateFilter -> updateFilter(event.index)
         }
     }
 
@@ -52,11 +52,10 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
         }
     }
 
-    private fun onSelectFilter(index: Int) {
+    private fun updateFilter(index: Int) {
         _uiState.update {
             it.copy(
-                filterIsSelected = true,
-                sendFilter = index
+               selectedFilter = index,
             )
         }
     }
@@ -124,7 +123,6 @@ sealed interface HomeScreenEvent : Event {
     object ToggleTools : HomeScreenEvent
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
-
-    data class FilterIsSelected(val index: Int) : HomeScreenEvent
+    data class UpdateFilter(val index: Int) : HomeScreenEvent
 
 }

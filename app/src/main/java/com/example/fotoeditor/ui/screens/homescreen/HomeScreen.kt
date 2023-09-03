@@ -16,6 +16,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,7 +52,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -169,10 +170,9 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 shouldShowOptionsMenu = uiState.shouldShowOptionsMenu,
                 shouldExpandLooks = uiState.shouldExpandLooks,
                 importPhoto = importPhoto,
-                filterIsSelected = uiState.filterIsSelected,
-                selectedFilter = uiState.sendFilter
+                selectedFilter = uiState.selectedFilter,
 
-            )
+                )
         },
         bottomBar = {
             AnimatedVisibility(visible = uiState.hasPhotoImported) {
@@ -239,7 +239,6 @@ private fun HomeScreen(
     shouldShowOptionsMenu: Boolean,
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
-    filterIsSelected: Boolean,
     selectedFilter: Int?
 ) {
     val offset = 20
@@ -374,33 +373,48 @@ private fun HomeScreenContent(
 
 
                                 Box(Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
+                                    val toolColor by animateColorAsState(
+                                        targetValue = if (index == selectedFilter) Color.Blue.copy(
+                                            0.4f
+                                        ) else Color.Transparent,
+                                        label = "ToolColor"
+                                    )
+
                                     Column(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        importedImageUri?.let {
-                                            AsyncImage(
-                                                model = it,
-                                                contentDescription = null,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier
-                                                    .width(82.dp)
-                                                    .height(96.dp)
-                                                    .selectable(
-                                                        selected = true,
-                                                        onClick = {
-                                                            onEvent(
-                                                                HomeScreenEvent.FilterIsSelected(
-                                                                    index
-                                                                )
-                                                            )
-                                                        }
-                                                    ), colorFilter = ColorFilter.colorMatrix(
-                                                    ColorMatrix(
-                                                        SelectFilter(index)
+                                        Box(Modifier
+                                            .border(
+                                                width = 1.8.dp,
+                                                shape = RectangleShape,
+                                                color = toolColor,
+                                            )
+                                            .selectable(
+                                                selected = true,
+                                                onClick = {
+                                                    onEvent(
+                                                        HomeScreenEvent.UpdateFilter(
+                                                            index
+                                                        )
+                                                    )
+                                                }
+                                            ), contentAlignment = Alignment.Center) {
+                                            importedImageUri?.let {
+                                                AsyncImage(
+                                                    model = it,
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .width(77.dp)
+                                                        .height(90.dp),
+                                                    colorFilter = ColorFilter.colorMatrix(
+                                                        ColorMatrix(
+                                                            SelectFilter(index)
+                                                        )
                                                     )
                                                 )
-                                            )
+                                            }
                                         }
                                         Text(
                                             text = filterName,
