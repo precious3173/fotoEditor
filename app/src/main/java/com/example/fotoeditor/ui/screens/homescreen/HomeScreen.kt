@@ -31,6 +31,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +60,7 @@ import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.LooksBottomSheet
 import com.example.fotoeditor.ui.components.SimpleTopAppBar
+import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
@@ -169,10 +171,10 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 importedImageUri = uiState.importedImageUri,
                 shouldShowOptionsMenu = uiState.shouldShowOptionsMenu,
                 shouldExpandLooks = uiState.shouldExpandLooks,
+                shouldExpandTools = uiState.shouldExpandTools,
                 importPhoto = importPhoto,
                 selectedFilter = uiState.selectedFilter,
-
-                )
+            )
         },
         bottomBar = {
             AnimatedVisibility(visible = uiState.hasPhotoImported) {
@@ -238,6 +240,7 @@ private fun HomeScreen(
     importedImageUri: Uri?,
     shouldShowOptionsMenu: Boolean,
     shouldExpandLooks: Boolean,
+    shouldExpandTools: Boolean,
     importPhoto: () -> Unit,
     selectedFilter: Int?
 ) {
@@ -276,9 +279,9 @@ private fun HomeScreen(
             hasPhotoImported = hasPhotoImported,
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
+            shouldExpandTools = shouldExpandTools,
             selectedFilter = selectedFilter,
-            onEvent = onEvent
-
+            onEvent = onEvent,
         )
     }
 }
@@ -289,6 +292,7 @@ private fun HomeScreenContent(
     hasPhotoImported: Boolean,
     importedImageUri: Uri?,
     shouldExpandLooks: Boolean,
+    shouldExpandTools: Boolean,
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
 ) {
@@ -332,100 +336,116 @@ private fun HomeScreenContent(
             //with image imported
             true -> {
                 val context = LocalContext.current
-                Column(
-                    Modifier
-                        .fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    importedImageUri?.let {
-                        AsyncImage(
-                            model = it,
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .animateContentSize()
-                                .weight(1f),
-                            colorFilter = ColorFilter.colorMatrix(
-                                ColorMatrix(SelectFilter(selectedFilter!!))
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    Column(
+                        Modifier
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        importedImageUri?.let {
+                            AsyncImage(
+                                model = it,
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .animateContentSize()
+                                    .weight(1f),
+                                colorFilter = ColorFilter.colorMatrix(
+                                    ColorMatrix(SelectFilter(selectedFilter!!))
+                                )
                             )
-                        )
-                    }
+                        }
 
-                    AnimatedVisibility(visible = shouldExpandLooks) {
-                        LooksBottomSheet {
-                            repeat(12) { index ->
-                                val filterName = when (index) {
-                                    0 -> "Current"
-                                    1 -> "Portrait"
-                                    2 -> "Smooth"
-                                    3 -> "Pop"
-                                    4 -> "Accentuate"
-                                    5 -> "Faded Glow"
-                                    6 -> "Morning"
-                                    7 -> "Bright"
-                                    8 -> "Fine Art"
-                                    9 -> "Push"
-                                    10 -> "Structure"
-                                    11 -> "Silhouette"
-                                    else -> ""
-                                }
+                        AnimatedVisibility(visible = shouldExpandLooks) {
+                            LooksBottomSheet {
+                                repeat(12) { index ->
+                                    val filterName = when (index) {
+                                        0 -> "Current"
+                                        1 -> "Portrait"
+                                        2 -> "Smooth"
+                                        3 -> "Pop"
+                                        4 -> "Accentuate"
+                                        5 -> "Faded Glow"
+                                        6 -> "Morning"
+                                        7 -> "Bright"
+                                        8 -> "Fine Art"
+                                        9 -> "Push"
+                                        10 -> "Structure"
+                                        11 -> "Silhouette"
+                                        else -> ""
+                                    }
 
 
-                                Box(Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                    val toolColor by animateColorAsState(
-                                        targetValue = if (index == selectedFilter) Color.Blue.copy(
-                                            0.4f
-                                        ) else Color.Transparent,
-                                        label = "ToolColor"
-                                    )
-
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    Box(
+                                        Modifier.padding(4.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Box(Modifier
-                                            .border(
-                                                width = 1.8.dp,
-                                                shape = RectangleShape,
-                                                color = toolColor,
-                                            )
-                                            .selectable(
-                                                selected = true,
-                                                onClick = {
-                                                    onEvent(
-                                                        HomeScreenEvent.UpdateFilter(
-                                                            index
+                                        val toolColor by animateColorAsState(
+                                            targetValue = if (index == selectedFilter) Color.Blue.copy(
+                                                0.4f
+                                            ) else Color.Transparent,
+                                            label = "ToolColor"
+                                        )
+
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Box(Modifier
+                                                .border(
+                                                    width = 1.8.dp,
+                                                    shape = RectangleShape,
+                                                    color = toolColor,
+                                                )
+                                                .selectable(
+                                                    selected = true,
+                                                    onClick = {
+                                                        onEvent(
+                                                            HomeScreenEvent.UpdateFilter(
+                                                                index
+                                                            )
+                                                        )
+                                                    }
+                                                ), contentAlignment = Alignment.Center) {
+                                                importedImageUri?.let {
+                                                    AsyncImage(
+                                                        model = it,
+                                                        contentDescription = null,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .width(77.dp)
+                                                            .height(90.dp),
+                                                        colorFilter = ColorFilter.colorMatrix(
+                                                            ColorMatrix(
+                                                                SelectFilter(index)
+                                                            )
                                                         )
                                                     )
                                                 }
-                                            ), contentAlignment = Alignment.Center) {
-                                            importedImageUri?.let {
-                                                AsyncImage(
-                                                    model = it,
-                                                    contentDescription = null,
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier
-                                                        .width(77.dp)
-                                                        .height(90.dp),
-                                                    colorFilter = ColorFilter.colorMatrix(
-                                                        ColorMatrix(
-                                                            SelectFilter(index)
-                                                        )
-                                                    )
-                                                )
                                             }
+                                            Text(
+                                                text = filterName,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+
                                         }
-                                        Text(
-                                            text = filterName,
-                                            style = MaterialTheme.typography.labelSmall
-                                        )
 
                                     }
-
                                 }
                             }
                         }
+                    }
+
+                    if (shouldExpandTools) {
+                        //todo() tools bottom sheet
+                        ToolsBottomSheet(
+                            onDismissRequest = { onEvent(HomeScreenEvent.ToggleTools) },
+                            visible = shouldExpandTools,
+                            content = {
+                                Box(Modifier.height(500.dp))
+                            }
+                        )
                     }
                 }
             }
