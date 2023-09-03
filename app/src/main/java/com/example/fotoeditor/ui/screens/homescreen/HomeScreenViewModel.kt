@@ -53,10 +53,14 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
     }
 
     private fun onSelectFilter(index: Int) {
-        _uiState.update { it.copy(
-            filterIsSelected = true,
-            sendFilter = index) }
+        _uiState.update {
+            it.copy(
+                filterIsSelected = true,
+                sendFilter = index
+            )
+        }
     }
+
     private fun onOpenOptionsMenu() {
         _uiState.update { it.copy(shouldShowOptionsMenu = true) }
     }
@@ -79,13 +83,23 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
 
     private fun onToggleLooks() {
         if (_uiState.value.hasPhotoImported) {
-            _uiState.update { it.copy(shouldExpandLooks = !_uiState.value.shouldExpandLooks) }
+            _uiState.update {
+                it.copy(
+                    shouldExpandTools = false,
+                    shouldExpandLooks = !uiState.value.shouldExpandLooks,
+                )
+            }
         }
     }
 
     private fun onToggleTools() {
         if (_uiState.value.hasPhotoImported) {
-            _uiState.update { it.copy(shouldExpandTools = !_uiState.value.shouldExpandTools) }
+            _uiState.update {
+                it.copy(
+                    shouldExpandLooks = false,
+                    shouldExpandTools = !_uiState.value.shouldExpandTools,
+                )
+            }
         }
     }
 

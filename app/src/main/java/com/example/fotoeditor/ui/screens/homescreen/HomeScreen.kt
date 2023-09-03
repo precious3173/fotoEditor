@@ -184,18 +184,23 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                 Color.Blue.copy(0.4f)
                             } else Color.Gray, label = "LooksTextColor"
                         )
-                        Box(
+                        val toolsTextColor by animateColorAsState(
+                            targetValue =
+                            if (uiState.shouldExpandTools) {
+                                Color.Blue.copy(0.4f)
+                            } else Color.Gray, label = "ToolsTextColor"
+                        )
 
+                        Box(
                             Modifier
                                 .weight(1f)
                                 .clickable(
                                     enabled = true,
                                     onClick = {
                                         when (index) {
-                                            0 -> {
-                                                viewModel.onEvent(HomeScreenEvent.ToggleLooks)
-                                            }
+                                            0 -> viewModel.onEvent(HomeScreenEvent.ToggleLooks)
 
+                                            1 -> viewModel.onEvent(HomeScreenEvent.ToggleTools)
                                             else -> Unit
                                         }
                                     },
@@ -211,6 +216,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         color = when (index) {
                                             0 -> looksTextColor
+                                            1 -> toolsTextColor
                                             else -> Color.Gray
                                         },
                                     ),
@@ -342,33 +348,36 @@ private fun HomeScreenContent(
                                 .animateContentSize()
                                 .weight(1f),
                             colorFilter = ColorFilter.colorMatrix(
-                                ColorMatrix(SelectFilter(selectedFilter!!)))
+                                ColorMatrix(SelectFilter(selectedFilter!!))
+                            )
                         )
                     }
 
                     AnimatedVisibility(visible = shouldExpandLooks) {
                         LooksBottomSheet {
-                            repeat(12) {index ->
-                               val filterName = when (index){
-                                   0  -> "Current"
-                                   1 -> "Portrait"
-                                   2 -> "Smooth"
-                                   3 -> "Pop"
-                                   4 -> "Accentuate"
-                                   5 -> "Faded Glow"
-                                   6 -> "Morning"
-                                   7 -> "Bright"
-                                   8 -> "Fine Art"
-                                   9 -> "Push"
-                                   10 -> "Structure"
-                                   11 -> "Silhouette"
-                                   else -> ""
-                               }
+                            repeat(12) { index ->
+                                val filterName = when (index) {
+                                    0 -> "Current"
+                                    1 -> "Portrait"
+                                    2 -> "Smooth"
+                                    3 -> "Pop"
+                                    4 -> "Accentuate"
+                                    5 -> "Faded Glow"
+                                    6 -> "Morning"
+                                    7 -> "Bright"
+                                    8 -> "Fine Art"
+                                    9 -> "Push"
+                                    10 -> "Structure"
+                                    11 -> "Silhouette"
+                                    else -> ""
+                                }
 
 
                                 Box(Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                    Column(modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
                                         importedImageUri?.let {
                                             AsyncImage(
                                                 model = it,
@@ -380,31 +389,26 @@ private fun HomeScreenContent(
                                                     .selectable(
                                                         selected = true,
                                                         onClick = {
-                                                            when (index) {
-
-                                                                0 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                1-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                2 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                3 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                4 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                5 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                6-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                7 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                8 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                9 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                10 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                11-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                            }
+                                                            onEvent(
+                                                                HomeScreenEvent.FilterIsSelected(
+                                                                    index
+                                                                )
+                                                            )
                                                         }
                                                     ), colorFilter = ColorFilter.colorMatrix(
                                                     ColorMatrix(
-                                                        SelectFilter(index)))
+                                                        SelectFilter(index)
+                                                    )
+                                                )
                                             )
                                         }
-                                        Text(text = filterName)
+                                        Text(
+                                            text = filterName,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
 
                                     }
-                                    
+
                                 }
                             }
                         }
@@ -415,7 +419,6 @@ private fun HomeScreenContent(
     }
 
 }
-
 
 
 data class BottomBarItem(
