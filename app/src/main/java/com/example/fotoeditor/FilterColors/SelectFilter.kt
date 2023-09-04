@@ -46,6 +46,13 @@ fun SelectFilter (index: Int): FloatArray {
         0f, 0f, .5f, 0f, 0f,
         0f, 0f, 0f, 1f, 0f
     )
+
+    val fineArt = floatArrayOf(
+        1f, 0f, 0f, 0f, -0.1f,
+        1.2f, .5f, 0f, 0f, -0.1f,
+        1.2f, 0f, .5f, 0f, -0.1f,
+        0f, 0f, 0f, 1f, 0f
+    )
     val noEffect = floatArrayOf(
         1f, 0f, 0f, 0f, 0f,
         0f, 1f, 0f, 0f, 0f,
@@ -60,6 +67,7 @@ fun SelectFilter (index: Int): FloatArray {
         4 -> lighten
         5 -> gray
         6 -> darken
+        8-> fineArt
         else -> noEffect
     }
 
