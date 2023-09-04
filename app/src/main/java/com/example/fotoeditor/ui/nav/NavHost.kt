@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -30,8 +31,8 @@ fun NavigationController() {
     val navController = rememberNavController()
     val appNavigator = Navigator(navController = navController)
 
-    val homeScreenViewModel = HomeScreenViewModel(LocalContext.current)
-    val editImageViewModel = EditImageViewModel(LocalContext.current)
+    val homeScreenViewModel = hiltViewModel<HomeScreenViewModel>()
+    val editImageViewModel = hiltViewModel<EditImageViewModel>()
 
     NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
         fotoComposable(Screen.SplashScreen.route) {

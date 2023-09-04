@@ -25,6 +25,7 @@ class EditImageMapperImpl @Inject constructor() : EditImageMapper {
             gpuImage.setFilter(filter)
             imgFilters.add(
                 ImageFilter(
+                    id = 1,
                     name = "Normal",
                     filter = filter,
                     filterPreview = gpuImage.bitmapWithFilterApplied
@@ -45,6 +46,7 @@ class EditImageMapperImpl @Inject constructor() : EditImageMapper {
             gpuImage.setFilter(filter)
             imgFilters.add(
                 ImageFilter(
+                    id = 2,
                     name = "Retro",
                     filter = filter,
                     filterPreview = gpuImage.bitmapWithFilterApplied
@@ -65,6 +67,7 @@ class EditImageMapperImpl @Inject constructor() : EditImageMapper {
             gpuImage.setFilter(filter)
             imgFilters.add(
                 ImageFilter(
+                    id = 3,
                     name = "Just",
                     filter = filter,
                     filterPreview = gpuImage.bitmapWithFilterApplied
@@ -85,6 +88,7 @@ class EditImageMapperImpl @Inject constructor() : EditImageMapper {
             gpuImage.setFilter(filter)
             imgFilters.add(
                 ImageFilter(
+                    id = 4,
                     name = "Hume",
                     filter = filter,
                     filterPreview = gpuImage.bitmapWithFilterApplied
