@@ -28,7 +28,8 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
-            is HomeScreenEvent.FilterIsSelected -> onSelectFilter(event.index)
+            is HomeScreenEvent.UpdateFilter -> updateFilter(event.index)
+            is HomeScreenEvent.SelectTool -> onSelectTool(event.id)
         }
     }
 
@@ -52,11 +53,14 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
         }
     }
 
-    private fun onSelectFilter(index: Int) {
-        _uiState.update { it.copy(
-            filterIsSelected = true,
-            sendFilter = index) }
+    private fun updateFilter(index: Int) {
+        _uiState.update {
+            it.copy(
+                selectedFilter = index,
+            )
+        }
     }
+
     private fun onOpenOptionsMenu() {
         _uiState.update { it.copy(shouldShowOptionsMenu = true) }
     }
@@ -79,18 +83,33 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
 
     private fun onToggleLooks() {
         if (_uiState.value.hasPhotoImported) {
-            _uiState.update { it.copy(shouldExpandLooks = !_uiState.value.shouldExpandLooks) }
+            _uiState.update {
+                it.copy(
+                    shouldExpandTools = false,
+                    shouldExpandLooks = !uiState.value.shouldExpandLooks,
+                )
+            }
         }
     }
 
     private fun onToggleTools() {
         if (_uiState.value.hasPhotoImported) {
-            _uiState.update { it.copy(shouldExpandTools = !_uiState.value.shouldExpandTools) }
+            _uiState.update {
+                it.copy(
+                    shouldExpandLooks = false,
+                    shouldExpandTools = !_uiState.value.shouldExpandTools,
+                    selectedToolId = -1,
+                )
+            }
         }
     }
 
     private fun onShowImageInfo(navigate: () -> Unit) {
         navigate()
+    }
+
+    private fun onSelectTool(id: Int) {
+        _uiState.update { it.copy(selectedToolId = id) }
     }
 
 }
@@ -110,7 +129,6 @@ sealed interface HomeScreenEvent : Event {
     object ToggleTools : HomeScreenEvent
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
-
-    data class FilterIsSelected(val index: Int) : HomeScreenEvent
-
+    data class UpdateFilter(val index: Int) : HomeScreenEvent
+    data class SelectTool(val id: Int) : HomeScreenEvent
 }

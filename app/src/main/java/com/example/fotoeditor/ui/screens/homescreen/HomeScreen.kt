@@ -16,20 +16,31 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,9 +48,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,7 +63,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -58,10 +70,15 @@ import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.LooksBottomSheet
 import com.example.fotoeditor.ui.components.SimpleTopAppBar
+import com.example.fotoeditor.ui.components.ToolItem
+import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
+import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
+import com.example.fotoeditor.ui.utils.ToolLibrary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,127 +118,180 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
         })
     }
 
-    Scaffold(
-        modifier = Modifier.padding(0.dp),
-        topBar = {
-            SimpleTopAppBar(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                navigationIcon = {
-                    TextButton(
-                        onClick = { importPhoto() },
-                        shape = MaterialTheme.shapes.small,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.open),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color.Black
-                            ),
-                        )
-                    }
-                },
-                actions = {
-                    HomeMenuDefaults.menus.forEachIndexed { _, homeMenuItem ->
-                        val enabled = when (homeMenuItem.contentDesc) {
-                            "menu_info" -> uiState.hasPhotoImported
-                            else -> true
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Scaffold(
+            modifier = Modifier.padding(0.dp),
+            topBar = {
+                SimpleTopAppBar(
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    navigationIcon = {
+                        TextButton(
+                            onClick = { importPhoto() },
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.open),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    color = Color.Black
+                                ),
+                            )
                         }
+                    },
+                    actions = {
+                        HomeMenuDefaults.menus.forEachIndexed { _, homeMenuItem ->
+                            val enabled = when (homeMenuItem.contentDesc) {
+                                "menu_info" -> uiState.hasPhotoImported
+                                else -> true
+                            }
 
-                        if (homeMenuItem.visible) {
+                            if (homeMenuItem.visible) {
+                                Box(
+                                    Modifier.padding(
+                                        top = 8.dp,
+                                        bottom = 8.dp,
+                                        start = 12.dp,
+                                    )
+                                ) {
+                                    val context = LocalContext.current
+                                    IconButton(
+                                        enabled = enabled,
+                                        onClick = {
+                                            if (homeMenuItem.contentDesc == "menu_more_items") {
+                                                viewModel.onEvent(HomeScreenEvent.OpenOptionsMenu)
+                                            } else if (homeMenuItem.contentDesc == "menu_info") {
+                                                Toast.makeText(
+                                                    context,
+                                                    "info icon",
+                                                    Toast.LENGTH_LONG
+                                                )
+                                                    .show()
+                                            }
+
+                                        }) {
+                                        Icon(
+                                            painterResource(id = homeMenuItem.icon),
+                                            contentDescription = homeMenuItem.contentDesc,
+                                            modifier = Modifier.semantics {
+                                                contentDescription = homeMenuItem.contentDesc
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            },
+            content = {
+                HomeScreen(
+                    modifier = Modifier.padding(it),
+                    onEvent = viewModel::onEvent,
+                    hasPhotoImported = uiState.hasPhotoImported,
+                    importedImageUri = uiState.importedImageUri,
+                    shouldShowOptionsMenu = uiState.shouldShowOptionsMenu,
+                    shouldExpandLooks = uiState.shouldExpandLooks,
+                    importPhoto = importPhoto,
+                    selectedFilter = uiState.selectedFilter,
+                )
+            },
+            bottomBar = {
+                AnimatedVisibility(visible = uiState.hasPhotoImported) {
+                    BottomBar {
+                        BottomBarDefaults.items.forEachIndexed { index, item ->
+                            val looksTextColor by animateColorAsState(
+                                targetValue =
+                                if (uiState.shouldExpandLooks) {
+                                    Color.Blue.copy(0.4f)
+                                } else Color.Gray, label = "LooksTextColor"
+                            )
+                            val toolsTextColor by animateColorAsState(
+                                targetValue =
+                                if (uiState.shouldExpandTools) {
+                                    Color.Blue.copy(0.4f)
+                                } else Color.Gray, label = "ToolsTextColor"
+                            )
+
                             Box(
-                                Modifier.padding(
-                                    top = 8.dp,
-                                    bottom = 8.dp,
-                                    start = 12.dp,
-                                )
-                            ) {
-                                val context = LocalContext.current
-                                IconButton(
-                                    enabled = enabled,
-                                    onClick = {
-                                        if (homeMenuItem.contentDesc == "menu_more_items") {
-                                            viewModel.onEvent(HomeScreenEvent.OpenOptionsMenu)
-                                        } else if (homeMenuItem.contentDesc == "menu_info") {
-                                            Toast.makeText(context, "info icon", Toast.LENGTH_LONG)
-                                                .show()
-                                        }
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(
+                                        enabled = true,
+                                        onClick = {
+                                            when (index) {
+                                                0 -> viewModel.onEvent(HomeScreenEvent.ToggleLooks)
 
-                                    }) {
-                                    Icon(
-                                        painterResource(id = homeMenuItem.icon),
-                                        contentDescription = homeMenuItem.contentDesc,
-                                        modifier = Modifier.semantics {
-                                            contentDescription = homeMenuItem.contentDesc
-                                        }
+                                                1 -> viewModel.onEvent(HomeScreenEvent.ToggleTools)
+                                                else -> Unit
+                                            }
+                                        },
+                                        role = Role.Button,
+                                    ), contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    Modifier.padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = item.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            color = when (index) {
+                                                0 -> looksTextColor
+                                                1 -> toolsTextColor
+                                                else -> Color.Gray
+                                            },
+                                        ),
                                     )
                                 }
                             }
                         }
                     }
                 }
-            )
-        },
-        content = {
-            HomeScreen(
-                modifier = Modifier.padding(it),
-                onEvent = viewModel::onEvent,
-                hasPhotoImported = uiState.hasPhotoImported,
-                importedImageUri = uiState.importedImageUri,
-                shouldShowOptionsMenu = uiState.shouldShowOptionsMenu,
-                shouldExpandLooks = uiState.shouldExpandLooks,
-                importPhoto = importPhoto,
-                filterIsSelected = uiState.filterIsSelected,
-                selectedFilter = uiState.sendFilter
+            }
+        )
 
-            )
-        },
-        bottomBar = {
-            AnimatedVisibility(visible = uiState.hasPhotoImported) {
-                BottomBar {
-                    BottomBarDefaults.items.forEachIndexed { index, item ->
-                        val looksTextColor by animateColorAsState(
-                            targetValue =
-                            if (uiState.shouldExpandLooks) {
-                                Color.Blue.copy(0.4f)
-                            } else Color.Gray, label = "LooksTextColor"
-                        )
-                        Box(
-
-                            Modifier
-                                .weight(1f)
-                                .clickable(
-                                    enabled = true,
-                                    onClick = {
-                                        when (index) {
-                                            0 -> {
-                                                viewModel.onEvent(HomeScreenEvent.ToggleLooks)
-                                            }
-
-                                            else -> Unit
-                                        }
-                                    },
-                                    role = Role.Button,
-                                ), contentAlignment = Alignment.Center
+        if (uiState.shouldExpandTools) {
+            ToolsBottomSheet(
+                onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleTools) },
+                visible = uiState.shouldExpandTools,
+                content = {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 800.dp)
+                    ) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(count = 4),
+                            state = rememberLazyGridState(),
+                            contentPadding = PaddingValues(12.dp),
                         ) {
-                            Box(
-                                Modifier.padding(vertical = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = when (index) {
-                                            0 -> looksTextColor
-                                            else -> Color.Gray
-                                        },
-                                    ),
-                                )
+                            items(ToolLibrary.tools) {
+                                Box(
+                                    Modifier
+                                        .clip(CircleShape)
+                                        .clickable(
+                                            enabled = true,
+                                            onClick = {
+                                                viewModel.onEvent(HomeScreenEvent.SelectTool(it.id))
+                                                navigator.navigateTo(
+                                                    route = Screen.EditImageScreen.withArgs(
+                                                        "${it.id}"
+                                                    )
+                                                )
+                                            },
+                                            role = Role.Button,
+                                        ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    ToolItem(it)
+                                }
                             }
                         }
                     }
                 }
-            }
+            )
         }
-    )
+
+    }
 }
 
 @Composable
@@ -233,7 +303,6 @@ private fun HomeScreen(
     shouldShowOptionsMenu: Boolean,
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
-    filterIsSelected: Boolean,
     selectedFilter: Int?
 ) {
     val offset = 20
@@ -272,8 +341,7 @@ private fun HomeScreen(
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
             selectedFilter = selectedFilter,
-            onEvent = onEvent
-
+            onEvent = onEvent,
         )
     }
 }
@@ -327,95 +395,114 @@ private fun HomeScreenContent(
             //with image imported
             true -> {
                 val context = LocalContext.current
-                Column(
-                    Modifier
-                        .fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    importedImageUri?.let {
-                        AsyncImage(
-                            model = it,
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .animateContentSize()
-                                .weight(1f),
-                            colorFilter = ColorFilter.colorMatrix(
-                                ColorMatrix(SelectFilter(selectedFilter!!)))
-                        )
-                    }
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    Column(
+                        Modifier
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        //the preview image
+                        importedImageUri?.let {
+                            AsyncImage(
+                                model = it,
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .animateContentSize()
+                                    .weight(1f),
+                                colorFilter = ColorFilter.colorMatrix(
+                                    ColorMatrix(SelectFilter(selectedFilter!!))
+                                )
+                            )
+                        }
 
-                    AnimatedVisibility(visible = shouldExpandLooks) {
-                        LooksBottomSheet {
-                            repeat(12) {index ->
-                               val filterName = when (index){
-                                   0  -> "Current"
-                                   1 -> "Portrait"
-                                   2 -> "Smooth"
-                                   3 -> "Pop"
-                                   4 -> "Accentuate"
-                                   5 -> "Faded Glow"
-                                   6 -> "Morning"
-                                   7 -> "Bright"
-                                   8 -> "Fine Art"
-                                   9 -> "Push"
-                                   10 -> "Structure"
-                                   11 -> "Silhouette"
-                                   else -> ""
-                               }
+                        AnimatedVisibility(visible = shouldExpandLooks) {
+                            LooksBottomSheet {
+                                repeat(12) { index ->
+                                    val filterName = when (index) {
+                                        0 -> "Current"
+                                        1 -> "Portrait"
+                                        2 -> "Smooth"
+                                        3 -> "Pop"
+                                        4 -> "Accentuate"
+                                        5 -> "Faded Glow"
+                                        6 -> "Morning"
+                                        7 -> "Bright"
+                                        8 -> "Fine Art"
+                                        9 -> "Push"
+                                        10 -> "Structure"
+                                        11 -> "Silhouette"
+                                        else -> ""
+                                    }
 
 
-                                Box(Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                    Column(modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally) {
-                                        importedImageUri?.let {
-                                            AsyncImage(
-                                                model = it,
-                                                contentDescription = null,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier
-                                                    .width(82.dp)
-                                                    .height(96.dp)
-                                                    .selectable(
-                                                        selected = true,
-                                                        onClick = {
-                                                            when (index) {
+                                    Box(
+                                        Modifier.padding(4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val toolColor by animateColorAsState(
+                                            targetValue = if (index == selectedFilter) Color.Blue.copy(
+                                                0.4f
+                                            ) else Color.Transparent,
+                                            label = "ToolColor"
+                                        )
 
-                                                                0 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                1-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                2 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                3 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                4 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                5 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                6-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                7 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                8 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                9 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                10 -> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                                11-> onEvent(HomeScreenEvent.FilterIsSelected(index))
-                                                            }
-                                                        }
-                                                    ), colorFilter = ColorFilter.colorMatrix(
-                                                    ColorMatrix(
-                                                        SelectFilter(index)))
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Box(Modifier
+                                                .border(
+                                                    width = 1.8.dp,
+                                                    shape = RectangleShape,
+                                                    color = toolColor,
+                                                )
+                                                .selectable(
+                                                    selected = true,
+                                                    onClick = {
+                                                        onEvent(
+                                                            HomeScreenEvent.UpdateFilter(
+                                                                index
+                                                            )
+                                                        )
+                                                    }
+                                                ), contentAlignment = Alignment.Center) {
+                                                importedImageUri?.let {
+                                                    AsyncImage(
+                                                        model = it,
+                                                        contentDescription = null,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .width(77.dp)
+                                                            .height(90.dp),
+                                                        colorFilter = ColorFilter.colorMatrix(
+                                                            ColorMatrix(
+                                                                SelectFilter(index)
+                                                            )
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                            Text(
+                                                text = filterName,
+                                                style = MaterialTheme.typography.labelSmall
                                             )
+
                                         }
-                                        Text(text = filterName)
 
                                     }
-                                    
                                 }
                             }
                         }
                     }
+
                 }
             }
         }
     }
 
 }
-
 
 
 data class BottomBarItem(

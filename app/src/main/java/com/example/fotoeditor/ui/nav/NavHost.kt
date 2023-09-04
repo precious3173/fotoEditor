@@ -1,5 +1,6 @@
 package com.example.fotoeditor.ui.nav
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,25 +13,46 @@ import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.fotoeditor.ui.screens.homescreen.HomeRoute
 import com.example.fotoeditor.ui.screens.SplashScreen
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageRoute
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 
 @Composable
 fun NavigationController() {
+    val TAG = "NavController"
     val navController = rememberNavController()
     val appNavigator = Navigator(navController = navController)
+
+    val homeScreenViewModel = HomeScreenViewModel(LocalContext.current)
+    val editImageViewModel = EditImageViewModel(LocalContext.current)
 
     NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
         fotoComposable(Screen.SplashScreen.route) {
             SplashScreen(navigator = appNavigator)
         }
+
         fotoComposable(Screen.HomeScreen.route) {
-            val viewModel = HomeScreenViewModel(LocalContext.current)
-            HomeRoute(navigator = appNavigator, viewModel = viewModel)
+            HomeRoute(navigator = appNavigator, viewModel = homeScreenViewModel)
+        }
+
+        fotoComposable(
+            route = Screen.EditImageScreen.route,
+            arguments = listOf(navArgument("toolId") {
+                type = NavType.StringType
+            })
+        ) {
+            EditImageRoute(
+                toolId = it.arguments?.getString("toolId"),
+                homeScreenViewModel = homeScreenViewModel,
+                editImageViewModel = editImageViewModel,
+            )
         }
     }
 }
