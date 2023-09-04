@@ -19,3 +19,7 @@ fun Uri.toBitmap(context: Context): Bitmap? {
     }
     return bitmap.value
 }
+
+fun String.toJpeg(): String{
+    return this.plus(".jpg")
+}

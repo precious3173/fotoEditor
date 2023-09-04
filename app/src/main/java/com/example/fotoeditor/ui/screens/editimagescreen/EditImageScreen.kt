@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,18 +19,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.ui.components.EditImageBottomBar
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
+import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.PhotoEditProgressIndicator
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.delay
@@ -45,53 +47,10 @@ fun EditImageRoute(
     val homeScreenUiState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
     val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "AnimatedProgress")
 
-    Log.e(TAG, "EditImageRoute: todoid is $toolId")
     toolId?.let {
         LaunchedEffect(Unit) {
             editImageViewModel.onEvent(EditImageEvent.UpdateToolId(it.toInt()))
             editImageViewModel.onEvent(EditImageEvent.UpdateImagePreview(homeScreenUiState.importedImageUri))
-        }
-    }
-
-    val isIncreasing = remember { mutableStateOf(true) }
-
-    LaunchedEffect(uiState.progress, isIncreasing.value) {
-        if (isIncreasing.value) {
-            if (uiState.progress == 1.0f) {
-                isIncreasing.value = false
-            }
-            editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.plus(0.01f)))
-            delay(1000)
-        }
-
-        if(!isIncreasing.value) {
-            if (uiState.progress == -1.0f) {
-                isIncreasing.value = true
-            }
-            editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.minus(0.01f)))
-            delay(1000)
-        }
-    }
-
-    if(isIncreasing.value) {
-        LaunchedEffect(uiState.progress, isIncreasing.value) {
-            if (uiState.progress >= 1.0f) {
-                isIncreasing.value = false
-                editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.minus(0.08f)))
-            }
-            editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.plus(0.08f)))
-            delay(1000)
-        }
-    }
-
-    if(!isIncreasing.value) {
-        LaunchedEffect(uiState.progress, isIncreasing.value) {
-            if (uiState.progress <= -1.0f) {
-                isIncreasing.value = true
-                editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.plus(0.08f)))
-            }
-            editImageViewModel.onEvent(EditImageEvent.UpdateProgress(uiState.progress.minus(0.08f)))
-            delay(1000)
         }
     }
 
@@ -101,6 +60,7 @@ fun EditImageRoute(
             EditImageScreen(
                 imageUri = uiState.imagePreview,
                 modifier = Modifier.padding(it),
+                onEvent = editImageViewModel::onEvent,
             )
         },
         bottomBar = {
@@ -128,7 +88,7 @@ fun EditImageRoute(
                             )
                         }
                     },
-                    content = {}
+                    content = {/*todo()*/}
                 )
             }
         }
@@ -139,13 +99,29 @@ fun EditImageRoute(
 private fun EditImageScreen(
     imageUri: Uri?,
     modifier: Modifier = Modifier,
+    onEvent: (Event) -> Unit,
 ) {
-    imageUri?.let {
-        EditImageContent(
-            modifier = modifier,
-            bitmap = it.toBitmap(LocalContext.current),
+    val TAG = "EditImage"
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        imageUri?.let {
+            EditImageContent(
+                modifier = modifier,
+                bitmap = it.toBitmap(LocalContext.current),
+            )
+        }
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(onEvent) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        onEvent(EditImageEvent.UpdateProgress(dragAmount.x / 10f))
+                    }
+                }
         )
     }
+
 }
 
 @Composable
@@ -164,7 +140,7 @@ private fun EditImageContent(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
+                contentScale = ContentScale.Fit,
             )
         }
     }
