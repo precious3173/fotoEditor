@@ -6,12 +6,18 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
 
 
-class EditImageViewModel(@SuppressLint("StaticFieldLeak") private val context: Context) : ViewModel(), EventHandler {
+@HiltViewModel
+class EditImageViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : ViewModel(), EventHandler {
     private val _uiState = MutableStateFlow(EditImageUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -38,7 +44,7 @@ class EditImageViewModel(@SuppressLint("StaticFieldLeak") private val context: C
 
 sealed interface EditImageEvent : Event {
     data class UpdateToolId(val id: Int) : EditImageEvent
-    data class UpdateImagePreview(val uri: Uri?): EditImageEvent
-    data class UpdateProgress(val progress: Float): EditImageEvent
+    data class UpdateImagePreview(val uri: Uri?) : EditImageEvent
+    data class UpdateProgress(val progress: Float) : EditImageEvent
 
 }

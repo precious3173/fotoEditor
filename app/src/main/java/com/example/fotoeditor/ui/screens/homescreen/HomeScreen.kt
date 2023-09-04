@@ -16,6 +16,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -67,6 +70,7 @@ import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
+import com.example.fotoeditor.domain.models.ImageFilter
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.LooksBottomSheet
 import com.example.fotoeditor.ui.components.SimpleTopAppBar
@@ -77,6 +81,7 @@ import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.ToolLibrary
+import com.example.fotoeditor.ui.utils.toBitmap
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -354,6 +359,7 @@ private fun HomeScreenContent(
     shouldExpandLooks: Boolean,
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
+    imageFilters: List<ImageFilter> = listOf(),
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
@@ -419,6 +425,74 @@ private fun HomeScreenContent(
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
                             LooksBottomSheet {
+//                                imageFilters.map { filter ->
+//                                    Box(
+//                                        Modifier.padding(4.dp),
+//                                        contentAlignment = Alignment.Center
+//                                    ) {
+//                                        val toolColor by animateColorAsState(
+//                                            targetValue = if (index == selectedFilter) Color.Blue.copy(
+//                                                0.4f
+//                                            ) else Color.Transparent,
+//                                            label = "ToolColor"
+//                                        )
+//
+//                                        Column(
+//                                            modifier = Modifier.fillMaxWidth(),
+//                                            horizontalAlignment = Alignment.CenterHorizontally
+//                                        ) {
+//                                            Box(Modifier
+//                                                .border(
+//                                                    width = 1.8.dp,
+//                                                    shape = RectangleShape,
+//                                                    color = toolColor,
+//                                                )
+//                                                .selectable(
+//                                                    selected = true,
+//                                                    onClick = {
+//                                                        onEvent(
+//                                                            HomeScreenEvent.UpdateFilter(
+//                                                                index
+//                                                            )
+//                                                        )
+//                                                    }
+//                                                ), contentAlignment = Alignment.Center) {
+//                                                importedImageUri?.let {
+//                                                    val bitmap = it.toBitmap(LocalContext.current)
+//                                                    bitmap?.let { image ->
+//                                                        Image(
+//                                                            bitmap = image.asImageBitmap(),
+//                                                            contentDescription = null,
+//                                                            contentScale = ContentScale.Crop,
+//                                                            modifier = Modifier
+//                                                                .width(77.dp)
+//                                                                .height(90.dp),
+//                                                            colorFilter = ColorFilter.colorMatrix(
+//                                                                ColorMatrix(
+//                                                                    SelectFilter(index)
+//                                                                )
+//                                                            )
+//                                                        )
+//
+//                                                        LaunchedEffect(Unit) {
+//                                                            onEvent(
+//                                                                HomeScreenEvent.LoadImageFilters(
+//                                                                    image
+//                                                                )
+//                                                            )
+//                                                        }
+//                                                    }
+//                                                }
+//                                            }
+//                                            Text(
+//                                                text = filterName,
+//                                                style = MaterialTheme.typography.labelSmall
+//                                            )
+//
+//                                        }
+//
+//                                    }
+//                                }
                                 repeat(12) { index ->
                                     val filterName = when (index) {
                                         0 -> "Current"
@@ -435,7 +509,6 @@ private fun HomeScreenContent(
                                         11 -> "Silhouette"
                                         else -> ""
                                     }
-
 
                                     Box(
                                         Modifier.padding(4.dp),
@@ -469,19 +542,22 @@ private fun HomeScreenContent(
                                                     }
                                                 ), contentAlignment = Alignment.Center) {
                                                 importedImageUri?.let {
-                                                    AsyncImage(
-                                                        model = it,
-                                                        contentDescription = null,
-                                                        contentScale = ContentScale.Crop,
-                                                        modifier = Modifier
-                                                            .width(77.dp)
-                                                            .height(90.dp),
-                                                        colorFilter = ColorFilter.colorMatrix(
-                                                            ColorMatrix(
-                                                                SelectFilter(index)
+                                                    val bitmap = it.toBitmap(LocalContext.current)
+                                                    bitmap?.let { image ->
+                                                        Image(
+                                                            bitmap = image.asImageBitmap(),
+                                                            contentDescription = null,
+                                                            contentScale = ContentScale.Crop,
+                                                            modifier = Modifier
+                                                                .width(77.dp)
+                                                                .height(90.dp),
+                                                            colorFilter = ColorFilter.colorMatrix(
+                                                                ColorMatrix(
+                                                                    SelectFilter(index)
+                                                                )
                                                             )
                                                         )
-                                                    )
+                                                    }
                                                 }
                                             }
                                             Text(

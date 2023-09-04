@@ -3,16 +3,29 @@ package com.example.fotoeditor.ui.screens.homescreen
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.fotoeditor.domain.EditImageRepository
+import com.example.fotoeditor.domain.models.ImageFilterState
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: Context) :
+@HiltViewModel
+class HomeScreenViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val repository: EditImageRepository,
+) :
     ViewModel(), EventHandler {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -30,7 +43,65 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
             is HomeScreenEvent.UpdateFilter -> updateFilter(event.index)
             is HomeScreenEvent.SelectTool -> onSelectTool(event.id)
+            is HomeScreenEvent.UpdateFilterOnImage -> updateFilterOnImage(event.bitmap)
+            is HomeScreenEvent.LoadImageFilters -> onLoadImageFilters(event.imageBitmap)
+            is HomeScreenEvent.SaveFilteredImage -> onSaveFilteredImage()
         }
+    }
+
+    private fun onLoadImageFilters(imageBitmap: Bitmap?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            kotlin.runCatching {
+                _uiState.value.imageFilterState?.let { state ->
+                    _uiState.update { it.copy(imageFilterState = state.copy(isLoading = true)) }
+                }
+                val image = getPreviewImage(imageBitmap)
+                image?.let { repository.loadImageFilters(it) }
+            }.onSuccess { filters ->
+                filters?.let { notNullFilters ->
+                    _uiState.value.imageFilterState?.let { state ->
+                        _uiState.update { it.copy(imageFilterState = state.copy(imageFilters = notNullFilters)) }
+                    }
+                }
+            }.onFailure { throwable ->
+                _uiState.value.imageFilterState?.let { state ->
+                    _uiState.update { it.copy(imageFilterState = state.copy(error = throwable.message.toString())) }
+                }
+            }
+        }
+    }
+
+    private fun onSaveFilteredImage() {
+        viewModelScope.launch(Dispatchers.IO) {
+            kotlin.runCatching {
+                _uiState.value.imageFilterState?.let { state ->
+                    _uiState.update { it.copy(imageFilterState = state.copy(isLoading = true)) }
+                }
+                _uiState.value.filteredImageBitmap?.let {
+                    repository.saveFilteredImage(it)
+                }
+            }.onSuccess {
+                _uiState.value.imageFilterState?.let { state ->
+                    _uiState.update { it.copy(imageFilterState = state.copy(isLoading = false)) }
+                }
+            }
+                .onFailure { throwable ->
+                    _uiState.value.imageFilterState?.let { state ->
+                        _uiState.update {
+                            it.copy(
+                                imageFilterState = state.copy(
+                                    isLoading = false,
+                                    error = throwable.message.toString()
+                                )
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun updateFilterOnImage(newBitmap: Bitmap?) {
+        _uiState.update { it.copy(filteredImageBitmap = newBitmap) }
     }
 
     private fun onImportImage(callback: (Boolean) -> Unit) {
@@ -44,12 +115,15 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
     }
 
     private fun onLoadImageUri(uri: Uri) {
-        _uiState.update {
-            it.copy(
-                hasPhotoImported = true,
-                importedImageUri = uri,
-                shouldExpandLooks = true,
-            )
+        kotlin.runCatching {
+            _uiState.update {
+                it.copy(
+                    hasPhotoImported = true,
+                    importedImageUri = uri,
+                    shouldExpandLooks = true,
+                    imageFilterState = ImageFilterState(),
+                )
+            }
         }
     }
 
@@ -112,6 +186,15 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
         _uiState.update { it.copy(selectedToolId = id) }
     }
 
+    private fun getPreviewImage(originalImage: Bitmap?): Bitmap? {
+        return kotlin.runCatching {
+            val previewWidth = checkNotNull(originalImage?.width)
+            val previewHeight = checkNotNull(originalImage?.height)
+            originalImage?.let {
+                Bitmap.createScaledBitmap(originalImage, previewWidth, previewHeight, false)
+            }
+        }.getOrDefault(originalImage)
+    }
 }
 
 
@@ -131,4 +214,7 @@ sealed interface HomeScreenEvent : Event {
     object HideExportMenu : HomeScreenEvent
     data class UpdateFilter(val index: Int) : HomeScreenEvent
     data class SelectTool(val id: Int) : HomeScreenEvent
+    data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent
+    data class LoadImageFilters(val imageBitmap: Bitmap?) : HomeScreenEvent
+    object SaveFilteredImage: HomeScreenEvent
 }
