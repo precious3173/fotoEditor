@@ -2,7 +2,9 @@ package com.example.fotoeditor.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -77,14 +79,15 @@ fun ToolsBottomSheet(
         AnimatedVisibility(
             visible = visible,
             enter = slideInVertically(
-                initialOffsetY = { fullHeight -> -fullHeight },
-                animationSpec = tween(350)
+                initialOffsetY = { fullHeight -> fullHeight },
+                animationSpec = tween(350, 20, easing = LinearEasing)
             ),
             exit = slideOutVertically(
-                targetOffsetY = { fullHeight -> -fullHeight },
-                animationSpec = tween(350)
+                targetOffsetY = { fullHeight -> fullHeight },
+                animationSpec = tween(350, 20, easing = LinearEasing)
             )
         ) {
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
