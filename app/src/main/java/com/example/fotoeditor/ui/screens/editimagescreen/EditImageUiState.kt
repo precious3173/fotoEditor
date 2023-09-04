@@ -5,4 +5,5 @@ import android.net.Uri
 data class EditImageUiState(
     val selectedToolId: Int = -1,
     val imagePreview: Uri? = null,
+    val progress: Float = 0f,
 )
