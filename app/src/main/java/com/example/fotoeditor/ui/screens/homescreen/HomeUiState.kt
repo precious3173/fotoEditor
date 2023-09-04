@@ -11,4 +11,5 @@ data class HomeUiState(
     val shouldShowOptionsMenu: Boolean = false,
     var importedImageUri: Uri? = null,
     val selectedFilter: Int = 0,
+    val selectedToolId: Int = -1,
 )

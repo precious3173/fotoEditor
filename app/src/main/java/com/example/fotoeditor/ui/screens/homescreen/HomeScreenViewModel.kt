@@ -29,6 +29,7 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
             is HomeScreenEvent.UpdateFilter -> updateFilter(event.index)
+            is HomeScreenEvent.SelectTool -> onSelectTool(event.id)
         }
     }
 
@@ -55,7 +56,7 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
     private fun updateFilter(index: Int) {
         _uiState.update {
             it.copy(
-               selectedFilter = index,
+                selectedFilter = index,
             )
         }
     }
@@ -97,6 +98,7 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
                 it.copy(
                     shouldExpandLooks = false,
                     shouldExpandTools = !_uiState.value.shouldExpandTools,
+                    selectedToolId = -1,
                 )
             }
         }
@@ -104,6 +106,10 @@ class HomeScreenViewModel(@SuppressLint("StaticFieldLeak") private val context: 
 
     private fun onShowImageInfo(navigate: () -> Unit) {
         navigate()
+    }
+
+    private fun onSelectTool(id: Int) {
+        _uiState.update { it.copy(selectedToolId = id) }
     }
 
 }
@@ -124,5 +130,5 @@ sealed interface HomeScreenEvent : Event {
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
     data class UpdateFilter(val index: Int) : HomeScreenEvent
-
+    data class SelectTool(val id: Int) : HomeScreenEvent
 }

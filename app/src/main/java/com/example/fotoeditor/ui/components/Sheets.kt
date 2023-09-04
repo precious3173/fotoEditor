@@ -5,9 +5,11 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -79,12 +81,12 @@ fun ToolsBottomSheet(
         AnimatedVisibility(
             visible = visible,
             enter = slideInVertically(
-                initialOffsetY = { fullHeight -> fullHeight },
-                animationSpec = tween(350, 20, easing = LinearEasing)
+                initialOffsetY = { fullHeight -> fullHeight + 400 },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = 0.8f)
             ),
             exit = slideOutVertically(
-                targetOffsetY = { fullHeight -> fullHeight },
-                animationSpec = tween(350, 20, easing = LinearEasing)
+                targetOffsetY = { fullHeight -> fullHeight + 400 },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = 0.8f)
             )
         ) {
 

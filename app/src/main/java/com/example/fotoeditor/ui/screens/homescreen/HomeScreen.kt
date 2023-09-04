@@ -73,6 +73,7 @@ import com.example.fotoeditor.ui.components.SimpleTopAppBar
 import com.example.fotoeditor.ui.components.ToolItem
 import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
+import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.ToolLibrary
@@ -249,7 +250,6 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
         )
 
         if (uiState.shouldExpandTools) {
-            //todo() tools bottom sheet
             ToolsBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleTools) },
                 visible = uiState.shouldExpandTools,
@@ -269,10 +269,17 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     Modifier
                                         .clip(CircleShape)
                                         .clickable(
-                                        enabled = true,
-                                        onClick = {/*todo() on select tool*/ },
-                                        role = Role.Button,
-                                    ),
+                                            enabled = true,
+                                            onClick = {
+                                                viewModel.onEvent(HomeScreenEvent.SelectTool(it.id))
+                                                navigator.navigateTo(
+                                                    route = Screen.EditImageScreen.withArgs(
+                                                        "${it.id}"
+                                                    )
+                                                )
+                                            },
+                                            role = Role.Button,
+                                        ),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     ToolItem(it)
@@ -395,6 +402,7 @@ private fun HomeScreenContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
+                        //the preview image
                         importedImageUri?.let {
                             AsyncImage(
                                 model = it,
