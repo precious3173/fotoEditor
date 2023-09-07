@@ -5,6 +5,22 @@
       <entry key="LooksBottomSheetPreview">
         <State />
       </entry>
+      <entry key="ToolItemPreview">
+        <State>
+          <targetSelectedWithDropDown>
+            <Target>
+              <type value="QUICK_BOOT_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="VIRTUAL_DEVICE_PATH" />
+                  <value value="C:\Users\Admin\.android\avd\Nexus_6P_API_33.avd" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </targetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2023-09-07T06:54:02.160325800Z" />
+        </State>
+      </entry>
       <entry key="app">
         <State />
       </entry>

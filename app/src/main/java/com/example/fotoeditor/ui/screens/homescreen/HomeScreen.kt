@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -83,6 +84,7 @@ import com.example.fotoeditor.R
 import com.example.fotoeditor.domain.models.ImageFilter
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.ExportBottomSheet
+import com.example.fotoeditor.ui.components.ExportItem
 import com.example.fotoeditor.ui.components.LooksBottomSheet
 import com.example.fotoeditor.ui.components.SimpleTopAppBar
 import com.example.fotoeditor.ui.components.ToolItem
@@ -90,6 +92,7 @@ import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
+import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
@@ -260,17 +263,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     ), contentAlignment = Alignment.Center
                             ) {
                                 Box(
-                                    Modifier.padding(vertical = 12.dp)
-//                                    clickable(
-//                                        enabled = true,
-//                                        onClick = {
-//                                            when (item.title){
-//                                                "EXPORT" ->
-//                                                    exportDialog()
-//
-//                                            }
-//                                        }
-//                                    )
+                                    Modifier
+                                        .padding(vertical = 12.dp)
                                             ,
                                     contentAlignment = Alignment.Center
 
@@ -337,22 +331,15 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         }
 
-        if(uiState.shouldExpandExport){
-            val context = LocalContext.current
-            val scope = rememberCoroutineScope()
-            val bottomSheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = uiState.shouldExpandExport
-            )
-            val windowInsets = if (uiState.shouldExpandExport) {
-                WindowInsets(0)
-            } else {
-                BottomSheetDefaults.windowInsets
-                }
+        val sheetState = rememberModalBottomSheetState()
+        val scope = rememberCoroutineScope()
+
+        if (uiState.shouldExpandExport) {
 
             ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
-                sheetState = uiState.shouldExpandExport,
-
+                visible = uiState.shouldExpandExport,
+                sheetState = sheetState,
                 content = {
                     Box(
                         Modifier
@@ -360,37 +347,29 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             .heightIn(max = 800.dp)
                     ) {
                         LazyVerticalGrid (
-                            columns = GridCells.Fixed(count = 4),
+                            columns = GridCells.Fixed(count = 1),
                             state = rememberLazyGridState(),
-                            contentPadding = PaddingValues(12.dp),
+                            contentPadding = PaddingValues(5.dp),
                         ) {
-                            items(ToolLibrary.tools) {
+                            items(ExportLibrary.exports){
+
                                 Box(
-                                    Modifier
-                                        .clip(CircleShape)
-                                        .clickable(
-                                            enabled = true,
-                                            onClick = {
-
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
-                                if (!bottomSheetState.isVisible) {
-                               uiState.shouldExpandExport
-                                }
-
-                        }
-                                            },
-                                            role = Role.Button,
-                                        ),
-                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 2.dp)
                                 ) {
-                                    ToolItem(it)
+                                    ExportItem(exports = it)
                                 }
                             }
                         }
                     }
-
                 }
             )
+
+        }
+
+
+
 
 //            {
 //
@@ -415,7 +394,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         }
     }
-}
+
 
 
 

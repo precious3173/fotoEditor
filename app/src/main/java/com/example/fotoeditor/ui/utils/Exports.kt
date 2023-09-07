@@ -18,10 +18,7 @@ object ExportLibrary {
         Exports(
             id = 1,
             title  = "Share",
-            description = """
-                Share your image with people or open it in another
-                 app.
-            """,
+            description = " Share your image with people or open it in another app ",
             icon = R.drawable.share,
         ),
         Exports(
@@ -33,10 +30,7 @@ object ExportLibrary {
         Exports(
             id = 3,
             title = "Export",
-            description = """
-                Create a copy of your photo. Sizing, format 
-                and quality can be changed in the settings menu.
-            """,
+            description = "Create a copy of your photo. Sizing, format and quality can be changed in the settings menu.",
             icon = R.drawable.jpeg,
         ),
         Exports(

@@ -30,9 +30,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.BottomSheetState
+import androidx.compose.material.BottomSheetValue
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.contentColorFor
+import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -115,22 +119,47 @@ fun ToolsBottomSheet(
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ExportBottomSheet(
     onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    sheetState: Boolean,
-    shape: Shape = BottomSheetDefaults.ExpandedShape,
-    containerColor: Color = BottomSheetDefaults.ContainerColor,
-    contentColor: Color = contentColorFor(containerColor),
-    tonalElevation: Dp = BottomSheetDefaults.Elevation,
-    scrimColor: Color = BottomSheetDefaults.ScrimColor,
-    dragHandle: (@Composable () -> Unit)? = { BottomSheetDefaults.DragHandle() },
-    windowInsets: WindowInsets = BottomSheetDefaults.windowInsets,
-    content: @Composable ColumnScope.() -> Unit
+    visible: Boolean,
+    sheetState: SheetState,
+    content: @Composable () -> Unit,
 ){
 
+    Box(contentAlignment = Alignment.BottomCenter) {
+        Scrim(
+            color = BottomSheetDefaults.ScrimColor,
+            onDismissRequest = onDismissRequest,
+            visible = visible
+        )
+        AnimatedVisibility(
+            visible = visible,
+            enter = slideInVertically(
+                initialOffsetY = { fullHeight -> fullHeight + 400 },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = 0.8f)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { fullHeight -> fullHeight + 400 },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = 0.8f)
+            )
+        ) {
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.White), contentAlignment = Alignment.BottomCenter) {
+                    content()
+                }
+            }
+        }
+    }
 }
 @Composable
 private fun Scrim(
