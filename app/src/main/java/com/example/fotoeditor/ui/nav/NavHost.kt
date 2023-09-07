@@ -49,6 +49,7 @@ fun NavigationController() {
                 type = NavType.StringType
             })
         ) {
+
             EditImageRoute(
                 toolId = it.arguments?.getString("toolId"),
                 homeScreenViewModel = homeScreenViewModel,

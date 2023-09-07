@@ -37,6 +37,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.ShowImageInfo -> onShowImageInfo(event.navigate)
             is HomeScreenEvent.ToggleLooks -> onToggleLooks()
             is HomeScreenEvent.ToggleTools -> onToggleTools()
+            is HomeScreenEvent.ToggleExport -> onToggleExport()
             is HomeScreenEvent.OnExportImage -> onShowExportMenu()
             is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
@@ -178,6 +179,17 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    private fun onToggleExport() {
+        if (_uiState.value.hasPhotoImported) {
+            _uiState.update {
+                it.copy(
+                    shouldExpandLooks = false,
+                    shouldExpandExport = !uiState.value.shouldExpandExport,
+                )
+            }
+        }
+    }
+
     private fun onShowImageInfo(navigate: () -> Unit) {
         navigate()
     }
@@ -210,6 +222,7 @@ sealed interface HomeScreenEvent : Event {
     object HideOptionsMenu : HomeScreenEvent
     object ToggleLooks : HomeScreenEvent
     object ToggleTools : HomeScreenEvent
+    object ToggleExport : HomeScreenEvent
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
     data class UpdateFilter(val index: Int) : HomeScreenEvent

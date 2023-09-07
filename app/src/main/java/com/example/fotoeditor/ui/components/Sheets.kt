@@ -19,8 +19,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -28,20 +30,28 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.contentColorFor
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 
@@ -95,14 +105,33 @@ fun ToolsBottomSheet(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
             ) {
-                Box(Modifier.fillMaxWidth().background(Color.White), contentAlignment = Alignment.BottomCenter) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.White), contentAlignment = Alignment.BottomCenter) {
                     content()
                 }
             }
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExportBottomSheet(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetState: Boolean,
+    shape: Shape = BottomSheetDefaults.ExpandedShape,
+    containerColor: Color = BottomSheetDefaults.ContainerColor,
+    contentColor: Color = contentColorFor(containerColor),
+    tonalElevation: Dp = BottomSheetDefaults.Elevation,
+    scrimColor: Color = BottomSheetDefaults.ScrimColor,
+    dragHandle: (@Composable () -> Unit)? = { BottomSheetDefaults.DragHandle() },
+    windowInsets: WindowInsets = BottomSheetDefaults.windowInsets,
+    content: @Composable ColumnScope.() -> Unit
+){
 
+}
 @Composable
 private fun Scrim(
     color: Color,

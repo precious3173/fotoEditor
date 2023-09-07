@@ -32,7 +32,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.ui.components.EditImageBottomBar
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
-import com.example.fotoeditor.ui.utils.PhotoEditProgressIndicator
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.delay
 
@@ -55,7 +54,9 @@ fun EditImageRoute(
     }
 
     Scaffold(
-        topBar = { PhotoEditProgressIndicator(progress = animatedProgress) },
+        topBar = {
+            //PhotoEditProgressIndicator(progress = animatedProgress)
+                 },
         content = {
             EditImageScreen(
                 imageUri = uiState.imagePreview,

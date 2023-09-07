@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
@@ -25,6 +27,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +42,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,9 +52,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,10 +77,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
+import com.example.fotoeditor.ExportDialog.ExportBottomDialog
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
 import com.example.fotoeditor.domain.models.ImageFilter
 import com.example.fotoeditor.ui.components.BottomBar
+import com.example.fotoeditor.ui.components.ExportBottomSheet
 import com.example.fotoeditor.ui.components.LooksBottomSheet
 import com.example.fotoeditor.ui.components.SimpleTopAppBar
 import com.example.fotoeditor.ui.components.ToolItem
@@ -82,6 +93,7 @@ import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -122,6 +134,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
             }
         })
     }
+
+
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Scaffold(
@@ -188,6 +202,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 )
             },
             content = {
+                val context = LocalContext.current
                 HomeScreen(
                     modifier = Modifier.padding(it),
                     onEvent = viewModel::onEvent,
@@ -197,9 +212,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandLooks = uiState.shouldExpandLooks,
                     importPhoto = importPhoto,
                     selectedFilter = uiState.selectedFilter,
+                    shouldExpandExport = uiState.shouldExpandExport
                 )
             },
             bottomBar = {
+                val context = LocalContext.current
+
                 AnimatedVisibility(visible = uiState.hasPhotoImported) {
                     BottomBar {
                         BottomBarDefaults.items.forEachIndexed { index, item ->
@@ -215,6 +233,13 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     Color.Blue.copy(0.4f)
                                 } else Color.Gray, label = "ToolsTextColor"
                             )
+                            val exportTextColor by animateColorAsState(
+                                targetValue =
+                                    if (uiState.shouldExpandExport){
+                                        Color.Blue.copy(0.4f)
+                                    }
+                                    else Color.Gray, label = "ExportTextColor"
+                            )
 
                             Box(
                                 Modifier
@@ -226,6 +251,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                 0 -> viewModel.onEvent(HomeScreenEvent.ToggleLooks)
 
                                                 1 -> viewModel.onEvent(HomeScreenEvent.ToggleTools)
+
+                                                2 -> viewModel.onEvent(HomeScreenEvent.ToggleExport)
                                                 else -> Unit
                                             }
                                         },
@@ -233,8 +260,20 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     ), contentAlignment = Alignment.Center
                             ) {
                                 Box(
-                                    Modifier.padding(vertical = 12.dp),
+                                    Modifier.padding(vertical = 12.dp)
+//                                    clickable(
+//                                        enabled = true,
+//                                        onClick = {
+//                                            when (item.title){
+//                                                "EXPORT" ->
+//                                                    exportDialog()
+//
+//                                            }
+//                                        }
+//                                    )
+                                            ,
                                     contentAlignment = Alignment.Center
+
                                 ) {
                                     Text(
                                         text = item.title,
@@ -242,6 +281,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                             color = when (index) {
                                                 0 -> looksTextColor
                                                 1 -> toolsTextColor
+                                                2 -> exportTextColor
                                                 else -> Color.Gray
                                             },
                                         ),
@@ -264,7 +304,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             .fillMaxWidth()
                             .heightIn(max = 800.dp)
                     ) {
-                        LazyVerticalGrid(
+                        LazyVerticalGrid (
                             columns = GridCells.Fixed(count = 4),
                             state = rememberLazyGridState(),
                             contentPadding = PaddingValues(12.dp),
@@ -294,10 +334,90 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     }
                 }
             )
+
         }
 
+        if(uiState.shouldExpandExport){
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val bottomSheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = uiState.shouldExpandExport
+            )
+            val windowInsets = if (uiState.shouldExpandExport) {
+                WindowInsets(0)
+            } else {
+                BottomSheetDefaults.windowInsets
+                }
+
+            ExportBottomSheet(
+                onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
+                sheetState = uiState.shouldExpandExport,
+
+                content = {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 800.dp)
+                    ) {
+                        LazyVerticalGrid (
+                            columns = GridCells.Fixed(count = 4),
+                            state = rememberLazyGridState(),
+                            contentPadding = PaddingValues(12.dp),
+                        ) {
+                            items(ToolLibrary.tools) {
+                                Box(
+                                    Modifier
+                                        .clip(CircleShape)
+                                        .clickable(
+                                            enabled = true,
+                                            onClick = {
+
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                                if (!bottomSheetState.isVisible) {
+                               uiState.shouldExpandExport
+                                }
+
+                        }
+                                            },
+                                            role = Role.Button,
+                                        ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    ToolItem(it)
+                                }
+                            }
+                        }
+                    }
+
+                }
+            )
+
+//            {
+//
+//                Row (Modifier.fillMaxWidth(),
+//                    horizontalArrangement = Arrangement.Center){
+//
+//                    Button(
+//                        // Note: If you provide logic outside of onDismissRequest to remove the sheet,
+//                        // you must additionally handle intended state cleanup, if any.
+//                        onClick = {
+//                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+//                                if (!bottomSheetState.isVisible) {
+//                               uiState.shouldExpandExport
+//                                }
+//                            }
+//                        }
+//                    ) {
+//                        Text("Hide Bottom Sheet")
+//                    }
+//                }
+//            }
+
+        }
     }
 }
+
+
 
 @Composable
 private fun HomeScreen(
@@ -308,7 +428,9 @@ private fun HomeScreen(
     shouldShowOptionsMenu: Boolean,
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
-    selectedFilter: Int?
+    selectedFilter: Int?,
+    shouldExpandExport: Boolean
+
 ) {
     val offset = 20
     AnimatedVisibility(

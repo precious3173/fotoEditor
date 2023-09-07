@@ -16,4 +16,5 @@ data class HomeUiState(
     val selectedToolId: Int = -1,
     val imageFilterState: ImageFilterState? = null,
     val filteredImageBitmap: Bitmap? = null,
+    val shouldExpandExport: Boolean = false
 )
