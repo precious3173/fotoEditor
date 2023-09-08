@@ -4,6 +4,8 @@ package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -75,6 +77,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
@@ -93,6 +96,7 @@ import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
+import com.example.fotoeditor.ui.utils.Exports
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
@@ -219,7 +223,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 )
             },
             bottomBar = {
-                val context = LocalContext.current
+
 
                 AnimatedVisibility(visible = uiState.hasPhotoImported) {
                     BottomBar {
@@ -335,7 +339,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
         val scope = rememberCoroutineScope()
 
         if (uiState.shouldExpandExport) {
-
+            val context = LocalContext.current
             ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
@@ -356,7 +360,19 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 2.dp)
+                                        .padding(top = 2.dp).clickable(
+                                            enabled = true,
+                                            onClick = {
+                                                when(it.title){
+                                                    "Share" ->{
+                                                        shareFile(context, uiState.importedImageUri)
+                                                    }
+                                                    "Save" ->{
+                                                        Toast.makeText(context, "Save file", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        )
                                 ) {
                                     ExportItem(exports = it)
                                 }
@@ -395,7 +411,16 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
         }
     }
 
+fun shareFile(context:Context, uri: Uri?) {
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_STREAM, uri )
+        type = "image/jpeg"
+    }
 
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    context.startActivity(shareIntent)
+}
 
 
 @Composable
