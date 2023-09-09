@@ -33,6 +33,7 @@ class HomeScreenViewModel @Inject constructor(
     override fun onEvent(event: Event) {
         when (event) {
             is HomeScreenEvent.ImportImage -> onImportImage(event.callback)
+            is HomeScreenEvent.AccessStorage -> onAccessStorage(event.access)
             is HomeScreenEvent.LoadImageUri -> onLoadImageUri(event.uri)
             is HomeScreenEvent.ShowImageInfo -> onShowImageInfo(event.navigate)
             is HomeScreenEvent.ToggleLooks -> onToggleLooks()
@@ -112,6 +113,16 @@ class HomeScreenViewModel @Inject constructor(
             ) -> callback(true)
 
             else -> callback(false)
+        }
+    }
+
+    private fun onAccessStorage (accessStorage: (Boolean) -> Unit) {
+        when (PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ) -> accessStorage(true)
+
+            else -> accessStorage(false)
         }
     }
 
@@ -215,6 +226,9 @@ sealed interface HomeScreenEvent : Event {
         val callback: (Boolean) -> Unit,
     ) : HomeScreenEvent
 
+     data class AccessStorage(
+         val access : (Boolean) -> Unit,
+     ): HomeScreenEvent
     data class LoadImageUri(val uri: Uri) : HomeScreenEvent
     data class ShowImageInfo(val navigate: () -> Unit) : HomeScreenEvent
     object OpenEditMenu : HomeScreenEvent

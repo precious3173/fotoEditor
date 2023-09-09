@@ -1,12 +1,21 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
+@file:Suppress("UNUSED_EXPRESSION")
 
 package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
+import android.R.attr.mimeType
+import android.R.attr.path
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,11 +36,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,19 +50,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -77,11 +78,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
-import com.example.fotoeditor.ExportDialog.ExportBottomDialog
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
 import com.example.fotoeditor.domain.models.ImageFilter
@@ -96,15 +95,24 @@ import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
-import com.example.fotoeditor.ui.utils.Exports
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
+import com.example.fotoeditor.ui.utils.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
-import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
 
+
+@SuppressLint("Recycle", "IntentReset")
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
+    val context = LocalContext.current
+    val saveImage = SaveImage()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -140,6 +148,21 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         })
+    }
+
+    val accessStorage: () -> Unit = {
+        viewModel.onEvent(HomeScreenEvent.AccessStorage{
+            hasPermission ->
+            if(hasPermission){
+               // Log.d(TAG, "Access granted")
+                Toast.makeText(context, "Access granted", Toast.LENGTH_SHORT).show()
+            }
+            else{
+                launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                Toast.makeText(context, "Access not granted", Toast.LENGTH_SHORT).show()
+            }
+        })
+
     }
 
 
@@ -219,7 +242,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandLooks = uiState.shouldExpandLooks,
                     importPhoto = importPhoto,
                     selectedFilter = uiState.selectedFilter,
-                    shouldExpandExport = uiState.shouldExpandExport
+                    shouldExpandExport = uiState.shouldExpandExport,
                 )
             },
             bottomBar = {
@@ -360,15 +383,20 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 2.dp).clickable(
+                                        .padding(top = 2.dp)
+                                        .clickable(
                                             enabled = true,
                                             onClick = {
-                                                when(it.title){
-                                                    "Share" ->{
+                                                when (it.title) {
+                                                    "Share" -> {
                                                         shareFile(context, uiState.importedImageUri)
                                                     }
-                                                    "Save" ->{
-                                                        Toast.makeText(context, "Save file", Toast.LENGTH_SHORT).show()
+
+                                                    "Save" -> {
+                                                        accessStorage()
+                                                        SaveImage.SaveImageToGallery.saveToGallery(context,
+                                                            uiState.importedImageUri!!
+                                                        )
                                                     }
                                                 }
                                             }
@@ -410,6 +438,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         }
     }
+
+
 
 fun shareFile(context:Context, uri: Uri?) {
     val sendIntent: Intent = Intent().apply {
@@ -472,7 +502,7 @@ private fun HomeScreen(
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
             selectedFilter = selectedFilter,
-            onEvent = onEvent,
+            onEvent = onEvent
         )
     }
 }
@@ -485,7 +515,7 @@ private fun HomeScreenContent(
     shouldExpandLooks: Boolean,
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
-    imageFilters: List<ImageFilter> = listOf(),
+    imageFilters: List<ImageFilter> = listOf()
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
