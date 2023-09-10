@@ -17,5 +17,5 @@ data class HomeUiState(
     val imageFilterState: ImageFilterState? = null,
     val filteredImageBitmap: Bitmap? = null,
     val shouldExpandExport: Boolean = false,
-
+    val openDialog: Boolean = false
 )

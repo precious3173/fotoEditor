@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -106,16 +107,17 @@ class SaveImage() {
                    context,
                    arrayOf(arrayOf(imageFile!!.absoluteFile).toString()), null
                ){
-                       path, uri -> var intent = Intent()
-                   intent= Intent(Intent.ACTION_VIEW, uri)
-//                                                                intent.putExtra(Intent.EXTRA_STREAM, uri)
-                   intent.type = "image/jpg"
+                       path, uri -> val intent = Intent(Intent.ACTION_VIEW, uri)
                    context.startActivity(
                        Intent.createChooser(
                            intent, "View Image"
                        )
                    )
                }
+
+               val alertDialog = AlertDialog.Builder(context)
+               alertDialog.setTitle("Photo Saved")
+               alertDialog.setPositiveButton("View", null).show()
 
                Toast
                    .makeText(

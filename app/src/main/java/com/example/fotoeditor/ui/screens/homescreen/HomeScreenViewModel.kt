@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.material3.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -186,6 +187,18 @@ class HomeScreenViewModel @Inject constructor(
                     shouldExpandTools = !_uiState.value.shouldExpandTools,
                     selectedToolId = -1,
                 )
+            }
+        }
+    }
+
+    private fun onAlertDialog(){
+
+        if (_uiState.value.openDialog){
+            _uiState.update {
+                it.copy(
+                    openDialog = true
+                )
+
             }
         }
     }
