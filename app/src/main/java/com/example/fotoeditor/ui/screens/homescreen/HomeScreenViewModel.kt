@@ -49,6 +49,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.UpdateFilterOnImage -> updateFilterOnImage(event.bitmap)
             is HomeScreenEvent.LoadImageFilters -> onLoadImageFilters(event.imageBitmap)
             is HomeScreenEvent.SaveFilteredImage -> onSaveFilteredImage()
+            is HomeScreenEvent.OnOpenDialog -> onOpenDialog()
         }
     }
 
@@ -191,15 +192,11 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private fun onAlertDialog(){
-
-        if (_uiState.value.openDialog){
-            _uiState.update {
-                it.copy(
-                    openDialog = true
-                )
-
-            }
+    private fun onOpenDialog(){
+        _uiState.update {
+            it.copy(
+                openDialog = !uiState.value.openDialog
+            )
         }
     }
 
@@ -250,6 +247,8 @@ sealed interface HomeScreenEvent : Event {
     object ToggleLooks : HomeScreenEvent
     object ToggleTools : HomeScreenEvent
     object ToggleExport : HomeScreenEvent
+
+    object OnOpenDialog: HomeScreenEvent
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
     data class UpdateFilter(val index: Int) : HomeScreenEvent

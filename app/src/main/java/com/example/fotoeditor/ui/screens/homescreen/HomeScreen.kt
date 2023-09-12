@@ -4,18 +4,11 @@
 package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
-import android.R.attr.mimeType
-import android.R.attr.path
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -84,6 +77,7 @@ import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
 import com.example.fotoeditor.domain.models.ImageFilter
+import com.example.fotoeditor.ui.components.AlertDialogExample
 import com.example.fotoeditor.ui.components.BottomBar
 import com.example.fotoeditor.ui.components.ExportBottomSheet
 import com.example.fotoeditor.ui.components.ExportItem
@@ -99,12 +93,6 @@ import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -242,7 +230,10 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandLooks = uiState.shouldExpandLooks,
                     importPhoto = importPhoto,
                     selectedFilter = uiState.selectedFilter,
+                    openDialog = uiState.openDialog,
                     shouldExpandExport = uiState.shouldExpandExport,
+                    toggleExport = viewModel.onEvent(HomeScreenEvent.ToggleExport)
+
                 )
             },
             bottomBar = {
@@ -395,8 +386,9 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                     "Save" -> {
                                                         accessStorage()
                                                         SaveImage.SaveImageToGallery.saveToGallery(context,
-                                                            uiState.importedImageUri!!
-                                                        )
+                                                            uiState.importedImageUri!!)
+                                                        viewModel.onEvent(HomeScreenEvent.ToggleExport)
+                                                        viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                     }
                                                 }
                                             }
@@ -411,6 +403,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
             )
 
         }
+
 
 
 
@@ -463,7 +456,9 @@ private fun HomeScreen(
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
     selectedFilter: Int?,
-    shouldExpandExport: Boolean
+    shouldExpandExport: Boolean,
+    openDialog: Boolean,
+    toggleExport: Unit
 
 ) {
     val offset = 20
@@ -502,7 +497,9 @@ private fun HomeScreen(
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
             selectedFilter = selectedFilter,
-            onEvent = onEvent
+            openDialog = openDialog,
+            onEvent = onEvent,
+            toggleExport = toggleExport
         )
     }
 }
@@ -515,6 +512,8 @@ private fun HomeScreenContent(
     shouldExpandLooks: Boolean,
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
+    openDialog: Boolean,
+    toggleExport: Unit,
     imageFilters: List<ImageFilter> = listOf()
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
@@ -580,6 +579,15 @@ private fun HomeScreenContent(
                         }
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
+                            if (openDialog){
+
+                                AlertDialogExample(
+                                    onDismissRequest = { onEvent(HomeScreenEvent.ToggleExport)},
+                                    dialogTitle = "Picture Saved",
+                                    buttonText =  "View Image",
+
+                                    )
+                            }
                             LooksBottomSheet {
 //                                imageFilters.map { filter ->
 //                                    Box(
