@@ -30,6 +30,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -78,6 +80,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
@@ -394,7 +397,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
                                                     "Save" -> {
                                                         accessStorage()
-                                                        SaveImage.SaveImageToGallery.saveToGallery(context,
+                                                        SaveImage.SaveImageToGallery.saveToGallery(
+                                                            context,
                                                             uiState.importedImageUri!!
                                                         )
                                                     }
@@ -577,6 +581,21 @@ private fun HomeScreenContent(
                                     ColorMatrix(SelectFilter(selectedFilter!!))
                                 )
                             )
+                        }
+                        Row (
+                            horizontalArrangement = Arrangement.SpaceAround){
+                      Box (
+                          modifier = Modifier.size(height = 90.dp, width = 290.dp).background(
+                              Color.Gray
+                          )
+                                  // rounded corner to match with the OutlinedTextField
+                              ){
+                                  Text( "Photo saved", Modifier.align(Alignment.BottomStart))
+                                  Text( "View", Modifier.align(Alignment.BottomEnd))
+                              }
+
+
+
                         }
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
