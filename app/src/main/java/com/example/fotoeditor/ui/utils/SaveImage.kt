@@ -102,22 +102,18 @@ class SaveImage() {
 //                                                                Intent(Intent.ACTION_VIEW, imageUri)
 //                                                            context.startActivity(intent)
 
+//
+//               MediaScannerConnection.scanFile(
+//                   context,
+//                   arrayOf(arrayOf(imageFile!!.absoluteFile).toString()), null){
+////                       path, uri -> val intent = Intent(Intent.ACTION_VIEW, uri)
+////                   context.startActivity(
+////                       Intent.createChooser(
+////                           intent, "View Image"
+////                       )
+////                   )
+//               }
 
-               MediaScannerConnection.scanFile(
-                   context,
-                   arrayOf(arrayOf(imageFile!!.absoluteFile).toString()), null
-               ){
-                       path, uri -> val intent = Intent(Intent.ACTION_VIEW, uri)
-                   context.startActivity(
-                       Intent.createChooser(
-                           intent, "View Image"
-                       )
-                   )
-               }
-
-               val alertDialog = AlertDialog.Builder(context)
-               alertDialog.setTitle("Photo Saved")
-               alertDialog.setPositiveButton("View", null).show()
 
                Toast
                    .makeText(

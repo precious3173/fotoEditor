@@ -4,18 +4,11 @@
 package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
-import android.R.attr.mimeType
-import android.R.attr.path
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -78,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -102,12 +96,6 @@ import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -246,6 +234,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     importPhoto = importPhoto,
                     selectedFilter = uiState.selectedFilter,
                     shouldExpandExport = uiState.shouldExpandExport,
+                    openDialog = uiState.openDialog
                 )
             },
             bottomBar = {
@@ -401,6 +390,9 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                             context,
                                                             uiState.importedImageUri!!
                                                         )
+                                                        viewModel.onEvent(HomeScreenEvent.ToggleExport)
+                                                        viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
+                                                        viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                     }
                                                 }
                                             }
@@ -467,7 +459,8 @@ private fun HomeScreen(
     shouldExpandLooks: Boolean,
     importPhoto: () -> Unit,
     selectedFilter: Int?,
-    shouldExpandExport: Boolean
+    shouldExpandExport: Boolean,
+    openDialog: Boolean
 
 ) {
     val offset = 20
@@ -506,7 +499,8 @@ private fun HomeScreen(
             importedImageUri = importedImageUri,
             shouldExpandLooks = shouldExpandLooks,
             selectedFilter = selectedFilter,
-            onEvent = onEvent
+            onEvent = onEvent,
+            openDialog = openDialog
         )
     }
 }
@@ -519,7 +513,8 @@ private fun HomeScreenContent(
     shouldExpandLooks: Boolean,
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
-    imageFilters: List<ImageFilter> = listOf()
+    imageFilters: List<ImageFilter> = listOf(),
+    openDialog: Boolean
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
@@ -582,21 +577,29 @@ private fun HomeScreenContent(
                                 )
                             )
                         }
-                        Row (
-                            horizontalArrangement = Arrangement.SpaceAround){
-                      Box (
-                          modifier = Modifier.size(height = 90.dp, width = 290.dp).background(
-                              Color.Gray
-                          )
-                                  // rounded corner to match with the OutlinedTextField
-                              ){
-                                  Text( "Photo saved", Modifier.align(Alignment.BottomStart))
-                                  Text( "View", Modifier.align(Alignment.BottomEnd))
-                              }
+
+                        if (openDialog){
+                            Row (
+                                horizontalArrangement = Arrangement.SpaceAround){
+                                Box (
+                                    modifier = Modifier.fillMaxWidth().
+                                    height(40.dp).
+                                    background(
+                                        Color.DarkGray
+                                    )
+                                    // rounded corner to match with the OutlinedTextField
+                                ){
+                                    Text( "Photo saved", Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp, start = 20.dp), fontSize = 16.sp, color = Color.White)
+                                    Text( "View", Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 10.dp), fontSize = 17.sp, color = Color.Blue
+                                        , fontWeight = FontWeight.Bold)
+
+                                }
 
 
 
+                            }
                         }
+
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
                             LooksBottomSheet {
