@@ -16,6 +16,7 @@ import com.example.fotoeditor.ui.utils.EventHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -50,6 +51,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.LoadImageFilters -> onLoadImageFilters(event.imageBitmap)
             is HomeScreenEvent.SaveFilteredImage -> onSaveFilteredImage()
             is HomeScreenEvent.OnOpenDialog -> onAlertDialog()
+            is HomeScreenEvent.OnCloseDialog -> onCloseDialog()
         }
     }
 
@@ -195,13 +197,29 @@ class HomeScreenViewModel @Inject constructor(
     private fun onAlertDialog(){
 
         if (_uiState.value.hasPhotoImported){
+
             _uiState.update {
                 it.copy(
-                    openDialog = !_uiState.value.openDialog
+            openDialog = !_uiState.value.openDialog
                 )
 
             }
         }
+
+    }
+
+    private fun onCloseDialog(){
+
+        if (_uiState.value.openDialog){
+
+            _uiState.update {
+                it.copy(
+                    closeDialog = _uiState.value.openDialog
+                )
+
+            }
+        }
+
     }
 
     private fun onToggleExport() {
@@ -254,6 +272,8 @@ sealed interface HomeScreenEvent : Event {
     object OnExportImage : HomeScreenEvent
     object HideExportMenu : HomeScreenEvent
     object OnOpenDialog : HomeScreenEvent
+
+    object  OnCloseDialog : HomeScreenEvent
     data class UpdateFilter(val index: Int) : HomeScreenEvent
     data class SelectTool(val id: Int) : HomeScreenEvent
     data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent

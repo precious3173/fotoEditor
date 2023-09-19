@@ -3,6 +3,7 @@ package com.example.fotoeditor.ui.screens.homescreen
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.appcompat.app.AlertDialog
 import com.example.fotoeditor.domain.models.ImageFilterState
 
 data class HomeUiState(
@@ -17,5 +18,6 @@ data class HomeUiState(
     val imageFilterState: ImageFilterState? = null,
     val filteredImageBitmap: Bitmap? = null,
     val shouldExpandExport: Boolean = false,
-    val openDialog: Boolean = false
+    var openDialog: Boolean = false,
+    var closeDialog: Boolean = true
 )

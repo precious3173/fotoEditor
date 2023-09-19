@@ -16,10 +16,15 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -45,15 +50,24 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -76,6 +90,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -96,6 +112,8 @@ import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -391,8 +409,10 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                             uiState.importedImageUri!!
                                                         )
                                                         viewModel.onEvent(HomeScreenEvent.ToggleExport)
-                                                        viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
+                                                        viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
+
+
                                                     }
                                                 }
                                             }
@@ -505,6 +525,8 @@ private fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun HomeScreenContent(
     importPhoto: () -> Unit,
@@ -556,6 +578,7 @@ private fun HomeScreenContent(
             //with image imported
             true -> {
                 val context = LocalContext.current
+                val composableScope = rememberCoroutineScope()
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     Column(
                         Modifier
@@ -577,28 +600,33 @@ private fun HomeScreenContent(
                                 )
                             )
                         }
+                   if (openDialog){
 
-                        if (openDialog){
-                            Row (
-                                horizontalArrangement = Arrangement.SpaceAround){
-                                Box (
-                                    modifier = Modifier.fillMaxWidth().
-                                    height(40.dp).
-                                    background(
-                                        Color.DarkGray
-                                    )
-                                    // rounded corner to match with the OutlinedTextField
-                                ){
-                                    Text( "Photo saved", Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp, start = 20.dp), fontSize = 16.sp, color = Color.White)
-                                    Text( "View", Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 10.dp), fontSize = 17.sp, color = Color.Blue
-                                        , fontWeight = FontWeight.Bold)
+                       Snackbar(
+                           modifier = Modifier.padding(2.dp),
+                           action = {
 
-                                }
+                               TextButton(onClick = {
+                                   Toast.makeText(context, "Action Click", Toast.LENGTH_SHORT)
+                                       .show()
+                               }) {
+                                   Text(text = "View")
+
+                               }
+
+                           },
 
 
 
-                            }
-                        }
+
+
+                       ) {
+                           Text(text = "Photo Saved")
+
+                       }
+
+                   }
+
 
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
