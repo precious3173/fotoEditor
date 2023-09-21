@@ -1,4 +1,4 @@
-package com.example.fotoeditor.ui.utils
+package com.example.fotoeditor.ui.ExportImage
 
 import android.content.ContentValues
 import android.content.Context

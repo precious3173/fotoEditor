@@ -91,11 +91,12 @@ import com.example.fotoeditor.ui.components.ToolItem
 import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
-import com.example.fotoeditor.ui.theme.SelectImage.AccessImage
+import com.example.fotoeditor.ui.ExportImage.AccessImage
+import com.example.fotoeditor.ui.ExportImage.ExportAs
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
-import com.example.fotoeditor.ui.utils.SaveImage
+import com.example.fotoeditor.ui.ExportImage.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -366,7 +367,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         if (uiState.shouldExpandExport) {
             val context = LocalContext.current
-            var snackDuration by remember { mutableStateOf(3000L)}
+            var snackDuration by remember { mutableStateOf(5000L)}
                 ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
@@ -420,6 +421,34 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         }
 
 
+                                                    }
+                                                    "Export" -> {
+                                                        accessStorage()
+                                                        SaveImage.SaveImageToGallery.saveToGallery(
+                                                            context,
+                                                            uiState.importedImageUri!!
+                                                        )
+
+                                                        viewModel.onEvent(HomeScreenEvent.ToggleExport)
+                                                        viewModel.onEvent(HomeScreenEvent.ToggleLooks)
+                                                        viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
+                                                        try {
+                                                            viewModel.onEvent(HomeScreenEvent.LoadEditedImageUri(uiState.importedImageUri!!))
+                                                        }
+                                                        catch (e: Exception){
+                                                            e.stackTrace
+                                                        }
+
+                                                        isVisible = true
+                                                        CoroutineScope(Dispatchers.Default).launch {
+                                                            delay(snackDuration)
+                                                            isVisible = false
+                                                        }
+
+
+                                                    }
+                                                    "Export as" -> {
+                                                     ExportAs.ExportToDownload.ExportAs(context, uiState.importedImageUri!!)
                                                     }
                                                 }
                                             }
