@@ -59,6 +59,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.SaveFilteredImage -> onSaveFilteredImage()
             is HomeScreenEvent.OnOpenDialog -> onAlertDialog()
             is HomeScreenEvent.OnCloseDialog -> onCloseDialog()
+            is HomeScreenEvent.LoadEditedImageUri -> onLoadEditedImageUri(event.uri)
         }
     }
 
@@ -145,6 +146,16 @@ class HomeScreenViewModel @Inject constructor(
                     importedImageUri = uri,
                     shouldExpandLooks = true,
                     imageFilterState = ImageFilterState(),
+                )
+            }
+        }
+    }
+
+    private fun onLoadEditedImageUri(uri: Uri) {
+        kotlin.runCatching {
+            _uiState.update {
+                it.copy(
+                    editedImageUri = uri
                 )
             }
         }
@@ -271,6 +282,7 @@ sealed interface HomeScreenEvent : Event {
          val access : (Boolean) -> Unit,
      ): HomeScreenEvent
     data class LoadImageUri(val uri: Uri) : HomeScreenEvent
+    data class LoadEditedImageUri(val uri: Uri) : HomeScreenEvent
     data class ShowImageInfo(val navigate: () -> Unit) : HomeScreenEvent
     object OpenEditMenu : HomeScreenEvent
     object OpenOptionsMenu : HomeScreenEvent

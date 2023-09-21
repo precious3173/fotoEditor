@@ -20,5 +20,6 @@ data class HomeUiState(
     val shouldExpandExport: Boolean = false,
     var openDialog: Boolean = false,
     var closeDialog: Boolean = true,
-    var  snackDuration: Long = 3000L
+    var  snackDuration: Long = 3000L,
+    var editedImageUri: Uri? = null
 )

@@ -46,7 +46,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Snackbar
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -92,6 +91,7 @@ import com.example.fotoeditor.ui.components.ToolItem
 import com.example.fotoeditor.ui.components.ToolsBottomSheet
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
+import com.example.fotoeditor.ui.theme.SelectImage.AccessImage
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
@@ -102,6 +102,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -241,7 +242,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     selectedFilter = uiState.selectedFilter,
                     shouldExpandExport = uiState.shouldExpandExport,
                     openDialog = uiState.openDialog,
-                    isVisbile = isVisible
+                    isVisbile = isVisible,
+                    editedImage = uiState.editedImageUri
                 )
             },
             bottomBar = {
@@ -400,14 +402,22 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                             context,
                                                             uiState.importedImageUri!!
                                                         )
+
                                                         viewModel.onEvent(HomeScreenEvent.ToggleExport)
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
-//                                                        isVisible = true
-//                                                        CoroutineScope(Dispatchers.Default).launch {
-//                                                            delay(snackDuration)
-//                                                            isVisible = false
-//                                                        }
+                                                        try {
+                                                            viewModel.onEvent(HomeScreenEvent.LoadEditedImageUri(uiState.importedImageUri!!))
+                                                        }
+                                                        catch (e: Exception){
+                                                            e.stackTrace
+                                                        }
+
+                                                        isVisible = true
+                                                        CoroutineScope(Dispatchers.Default).launch {
+                                                            delay(snackDuration)
+                                                            isVisible = false
+                                                        }
 
 
                                                     }
@@ -478,7 +488,8 @@ private fun HomeScreen(
     selectedFilter: Int?,
     shouldExpandExport: Boolean,
     openDialog: Boolean,
-    isVisbile: Boolean
+    isVisbile: Boolean,
+    editedImage: Uri?
 
 ) {
     val offset = 20
@@ -519,7 +530,8 @@ private fun HomeScreen(
             selectedFilter = selectedFilter,
             onEvent = onEvent,
             openDialog = openDialog,
-            isVisible = isVisbile
+            isVisible = isVisbile,
+            editedImage = editedImage
         )
     }
 }
@@ -536,7 +548,8 @@ private fun HomeScreenContent(
     onEvent: (Event) -> Unit,
     imageFilters: List<ImageFilter> = listOf(),
     openDialog: Boolean,
-    isVisible: Boolean
+    isVisible: Boolean,
+    editedImage: Uri?
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
@@ -600,7 +613,7 @@ private fun HomeScreenContent(
                             )
                         }
                         //isVisible
-                   if (openDialog){
+                   if (isVisible){
 
                        Snackbar(
                            modifier = Modifier.padding(2.dp),
@@ -608,8 +621,13 @@ private fun HomeScreenContent(
                            action = {
 
                                TextButton(onClick = {
-                                   Toast.makeText(context, "Action Click", Toast.LENGTH_SHORT)
-                                       .show()
+                                   if (editedImage != null) {
+                                       AccessImage.AccessGallery.AccessImage(context = context, editedImage)
+                                       Toast.makeText(context, "image is not empty", Toast.LENGTH_SHORT).show()
+                                   }
+                                   else{
+                                       Toast.makeText(context, "image is empty", Toast.LENGTH_SHORT).show()
+                                   }
                                },
 
 
