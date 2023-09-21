@@ -20,15 +20,10 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +31,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,8 +38,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -54,24 +46,15 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Snackbar
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.SnackbarHost
-import androidx.compose.material.SnackbarResult
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarData
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,13 +75,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fotoeditor.DropDownMenu.OptionsMenu
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -119,6 +98,8 @@ import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.utils.SaveImage
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -128,7 +109,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     val context = LocalContext.current
-    val saveImage = SaveImage()
+    var isVisible by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -259,7 +240,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     importPhoto = importPhoto,
                     selectedFilter = uiState.selectedFilter,
                     shouldExpandExport = uiState.shouldExpandExport,
-                    openDialog = uiState.openDialog
+                    openDialog = uiState.openDialog,
+                    isVisbile = isVisible
                 )
             },
             bottomBar = {
@@ -378,9 +360,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
         val sheetState = rememberModalBottomSheetState()
         val scope = rememberCoroutineScope()
 
+
+
         if (uiState.shouldExpandExport) {
             val context = LocalContext.current
-            ExportBottomSheet(
+            var snackDuration by remember { mutableStateOf(3000L)}
+                ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
                 sheetState = sheetState,
@@ -418,6 +403,11 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleExport)
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
+//                                                        isVisible = true
+//                                                        CoroutineScope(Dispatchers.Default).launch {
+//                                                            delay(snackDuration)
+//                                                            isVisible = false
+//                                                        }
 
 
                                                     }
@@ -487,7 +477,8 @@ private fun HomeScreen(
     importPhoto: () -> Unit,
     selectedFilter: Int?,
     shouldExpandExport: Boolean,
-    openDialog: Boolean
+    openDialog: Boolean,
+    isVisbile: Boolean
 
 ) {
     val offset = 20
@@ -527,7 +518,8 @@ private fun HomeScreen(
             shouldExpandLooks = shouldExpandLooks,
             selectedFilter = selectedFilter,
             onEvent = onEvent,
-            openDialog = openDialog
+            openDialog = openDialog,
+            isVisible = isVisbile
         )
     }
 }
@@ -543,7 +535,8 @@ private fun HomeScreenContent(
     selectedFilter: Int?,
     onEvent: (Event) -> Unit,
     imageFilters: List<ImageFilter> = listOf(),
-    openDialog: Boolean
+    openDialog: Boolean,
+    isVisible: Boolean
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
         when (targetState) {
@@ -585,8 +578,6 @@ private fun HomeScreenContent(
             //with image imported
             true -> {
                 val context = LocalContext.current
-                val scaffoldState = rememberScaffoldState()
-                val composableScope = rememberCoroutineScope()
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     Column(
                         Modifier
@@ -608,179 +599,36 @@ private fun HomeScreenContent(
                                 )
                             )
                         }
+                        //isVisible
                    if (openDialog){
 
-                       Scaffold(
-                           scaffoldState = scaffoldState,
-                           modifier = Modifier.padding(0.dp),
-                           snackbarHost = {
-                               // reuse default SnackbarHost to have default animation and timing handling
-                               SnackbarHost(it){ data ->
-                                   // custom snackbar with the custom border
-                                   Snackbar(
-                                       elevation = 4.dp,
-                                       snackbarData = data,
-                                       modifier = Modifier.align(Alignment.CenterHorizontally)
-                                   )
+                       Snackbar(
+                           modifier = Modifier.padding(2.dp),
+
+                           action = {
+
+                               TextButton(onClick = {
+                                   Toast.makeText(context, "Action Click", Toast.LENGTH_SHORT)
+                                       .show()
+                               },
+
+
+                               ) {
+                                   Text(text = "View")
+
+
                                }
+
                            },
-                           content = {
-                                   innerPadding ->
-                                    Box(modifier = Modifier.padding(innerPadding)){
-                                        Column(
-                                            Modifier
-                                                .fillMaxSize(),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.SpaceBetween,
-                                        ) {
-                                            //the preview image
-                                            importedImageUri?.let {
-                                                AsyncImage(
-                                                    model = it,
-                                                    contentDescription = null,
-                                                    contentScale = ContentScale.Fit,
-                                                    modifier = Modifier
-                                                        .animateContentSize()
-                                                        .weight(1f),
-                                                    colorFilter = ColorFilter.colorMatrix(
-                                                        ColorMatrix(SelectFilter(selectedFilter!!))
-                                                    )
-                                                )
-                                            }
-                                            LaunchedEffect(scaffoldState.snackbarHostState) {
-                                               val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
-                                                    message = "Photo Saved",
-                                                    actionLabel = "View",
-                                                    duration = SnackbarDuration.Short)
-
-                                                when (snackbarResult){
-                                                    SnackbarResult.Dismissed ->{
-                                                        Log.d("Snackbar", "Snackbar dismissed")
-                                                    }
-                                                    SnackbarResult.ActionPerformed ->{
-                                                        Log.d("Snackbar", "Action Performed")
-                                                    }
-                                                }
-                                            }
-                                            AnimatedVisibility(visible = shouldExpandLooks) {
-                                                LooksBottomSheet {
-//
-                                                    repeat(12) { index ->
-                                                        val filterName = when (index) {
-                                                            0 -> "Current"
-                                                            1 -> "Portrait"
-                                                            2 -> "Smooth"
-                                                            3 -> "Pop"
-                                                            4 -> "Accentuate"
-                                                            5 -> "Faded Glow"
-                                                            6 -> "Morning"
-                                                            7 -> "Bright"
-                                                            8 -> "Fine Art"
-                                                            9 -> "Push"
-                                                            10 -> "Structure"
-                                                            11 -> "Silhouette"
-                                                            else -> ""
-                                                        }
-
-                                                        Box(
-                                                            Modifier.padding(4.dp),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            val toolColor by animateColorAsState(
-                                                                targetValue = if (index == selectedFilter) Color.Blue.copy(
-                                                                    0.4f
-                                                                ) else Color.Transparent,
-                                                                label = "ToolColor"
-                                                            )
-
-                                                            Column(
-                                                                modifier = Modifier.fillMaxWidth(),
-                                                                horizontalAlignment = Alignment.CenterHorizontally
-                                                            ) {
-                                                                Box(Modifier
-                                                                    .border(
-                                                                        width = 1.8.dp,
-                                                                        shape = RectangleShape,
-                                                                        color = toolColor,
-                                                                    )
-                                                                    .selectable(
-                                                                        selected = true,
-                                                                        onClick = {
-                                                                            onEvent(
-                                                                                HomeScreenEvent.UpdateFilter(
-                                                                                    index
-                                                                                )
-                                                                            )
-                                                                        }
-                                                                    ), contentAlignment = Alignment.Center) {
-                                                                    importedImageUri?.let {
-                                                                        val bitmap = it.toBitmap(LocalContext.current)
-                                                                        bitmap?.let { image ->
-                                                                            Image(
-                                                                                bitmap = image.asImageBitmap(),
-                                                                                contentDescription = null,
-                                                                                contentScale = ContentScale.Crop,
-                                                                                modifier = Modifier
-                                                                                    .width(77.dp)
-                                                                                    .height(90.dp),
-                                                                                colorFilter = ColorFilter.colorMatrix(
-                                                                                    ColorMatrix(
-                                                                                        SelectFilter(index)
-                                                                                    )
-                                                                                )
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                }
-                                                                Text(
-                                                                    text = filterName,
-                                                                    style = MaterialTheme.typography.labelSmall
-                                                                )
-
-                                                            }
-
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-
-                           }
-
-                       )
 
 
 
 
-//                       Snackbar(
-//                           modifier = Modifier.padding(2.dp),
-//
-//                           action = {
-//
-//                               TextButton(onClick = {
-//                                   Toast.makeText(context, "Action Click", Toast.LENGTH_SHORT)
-//                                       .show()
-//                               },
-//
-//
-//                               ) {
-//                                   Text(text = "View")
-//
-//
-//                               }
-//                                 !openDialog
-//                           },
-//
-//
-//
-//
-//
-//                       ) {
-//                           Text(text = "Photo Saved")
-//
-//                       }
+
+                       ) {
+                           Text(text = "Photo Saved")
+
+                       }
 
                    }
 

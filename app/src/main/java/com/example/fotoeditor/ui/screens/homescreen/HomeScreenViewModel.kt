@@ -1,11 +1,16 @@
 package com.example.fotoeditor.ui.screens.homescreen
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +20,7 @@ import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +38,7 @@ class HomeScreenViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
+
     override fun onEvent(event: Event) {
         when (event) {
             is HomeScreenEvent.ImportImage -> onImportImage(event.callback)
@@ -113,7 +120,7 @@ class HomeScreenViewModel @Inject constructor(
     private fun onImportImage(callback: (Boolean) -> Unit) {
         when (PackageManager.PERMISSION_GRANTED) {
             ContextCompat.checkSelfPermission(
-                context, android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                context, Manifest.permission.READ_EXTERNAL_STORAGE,
             ) -> callback(true)
 
             else -> callback(false)
@@ -123,7 +130,7 @@ class HomeScreenViewModel @Inject constructor(
     private fun onAccessStorage (accessStorage: (Boolean) -> Unit) {
         when (PackageManager.PERMISSION_GRANTED) {
             ContextCompat.checkSelfPermission(
-                context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                context, Manifest.permission.WRITE_EXTERNAL_STORAGE,
             ) -> accessStorage(true)
 
             else -> accessStorage(false)
@@ -198,15 +205,17 @@ class HomeScreenViewModel @Inject constructor(
 
         if (_uiState.value.hasPhotoImported){
 
-            _uiState.update {
-                it.copy(
-            openDialog = !_uiState.value.openDialog
-                )
+                    _uiState.value.openDialog = !_uiState.value.openDialog
+                    CoroutineScope(Dispatchers.Default).launch {
+                        delay(_uiState.value.snackDuration)
+                        _uiState.value.openDialog = !_uiState.value.openDialog
+                    }
+
 
             }
         }
 
-    }
+
 
     private fun onCloseDialog(){
 

@@ -97,31 +97,6 @@ class SaveImage() {
                    throw IOException("Failed to save bitmap.");
                outputStream.flush();
 
-//
-//                                                            val intent =
-//                                                                Intent(Intent.ACTION_VIEW, imageUri)
-//                                                            context.startActivity(intent)
-
-//
-//               MediaScannerConnection.scanFile(
-//                   context,
-//                   arrayOf(arrayOf(imageFile!!.absoluteFile).toString()), null){
-////                       path, uri -> val intent = Intent(Intent.ACTION_VIEW, uri)
-////                   context.startActivity(
-////                       Intent.createChooser(
-////                           intent, "View Image"
-////                       )
-////                   )
-//               }
-
-
-               Toast
-                   .makeText(
-                       context,
-                       "Image Saved",
-                       Toast.LENGTH_SHORT
-                   )
-                   .show()
 
            } catch (e: Exception) {
                Toast

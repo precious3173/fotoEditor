@@ -19,5 +19,6 @@ data class HomeUiState(
     val filteredImageBitmap: Bitmap? = null,
     val shouldExpandExport: Boolean = false,
     var openDialog: Boolean = false,
-    var closeDialog: Boolean = true
+    var closeDialog: Boolean = true,
+    var  snackDuration: Long = 3000L
 )
