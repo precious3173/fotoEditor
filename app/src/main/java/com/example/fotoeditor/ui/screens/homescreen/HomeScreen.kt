@@ -120,8 +120,6 @@ import kotlin.coroutines.coroutineContext
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     val context = LocalContext.current
     var isVisible by remember { mutableStateOf(false) }
-    var onCancel by remember { mutableStateOf(false) }
-    val snackDuration by remember { mutableStateOf(1000L)}
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -254,8 +252,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandExport = uiState.shouldExpandExport,
                     openDialog = uiState.openDialog,
                     isVisbile = isVisible,
-                    editedImage = uiState.editedImageUri,
-                    cancelEdits = onCancel
+                    editedImage = uiState.editedImageUri
                 )
             },
             bottomBar = {
@@ -588,8 +585,7 @@ private fun HomeScreen(
     shouldExpandExport: Boolean,
     openDialog: Boolean,
     isVisbile: Boolean,
-    editedImage: Uri?,
-    cancelEdits: Boolean
+    editedImage: Uri?
 
 ) {
     val offset = 20
@@ -632,7 +628,7 @@ private fun HomeScreen(
             openDialog = openDialog,
             isVisible = isVisbile,
             editedImage = editedImage,
-            cancelEdit = cancelEdits
+
         )
     }
 }
@@ -650,8 +646,7 @@ private fun HomeScreenContent(
     imageFilters: List<ImageFilter> = listOf(),
     openDialog: Boolean,
     isVisible: Boolean,
-    editedImage: Uri?,
-    cancelEdit:Boolean
+    editedImage: Uri?
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
 

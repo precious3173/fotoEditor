@@ -36,7 +36,7 @@ fun SelectFilter (index: Int): FloatArray {
     val fadedGlow = floatArrayOf(
         1.2f, 0f, 0f, 0f, 0f,
         0f, 1.2f, 0f, 0f, 0f,
-        0f, 0f, 0.8f, 0f, 0f,
+        0f, 0f, 1.2f, 0f, 0f,
         0f, 0f, 0f, 1f, 0f
     )
 

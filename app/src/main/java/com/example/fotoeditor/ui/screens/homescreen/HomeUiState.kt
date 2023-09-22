@@ -25,5 +25,4 @@ data class HomeUiState(
     var filterSelected: Boolean = false,
     var filterSelectedForUSe: Uri? = null,
     var shouldSendEditedImageUri: Boolean = false,
-    var shouldCancelEdit: Boolean = false
 )

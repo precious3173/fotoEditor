@@ -69,23 +69,12 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.FilterUnSelected  -> onFilterUnSelected()
             is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.bitmap)
             is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
-            is  HomeScreenEvent.cancelEdit -> onCancelEdit()
+
 
         }
     }
 
-    private fun onCancelEdit(){
 
-        CoroutineScope(Dispatchers.IO).launch {
-            _uiState.update {
-                it.copy(
-                    shouldCancelEdit = true
-                )
-
-            }
-
-        }
-    }
     private fun onLoadImageFilters(imageBitmap: Bitmap?) {
         viewModelScope.launch(Dispatchers.IO) {
             kotlin.runCatching {
@@ -384,5 +373,5 @@ sealed interface HomeScreenEvent : Event {
     object FilterUnSelected:  HomeScreenEvent
 
     object SendEditedUri: HomeScreenEvent
-    object cancelEdit: HomeScreenEvent
+
 }
