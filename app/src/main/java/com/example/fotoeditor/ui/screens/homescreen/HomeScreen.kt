@@ -261,8 +261,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                 modifier = Modifier.wrapContentSize().
                                 padding(top = 20.dp, bottom = 10.dp)
                                     .clickable {
-                                        viewModel.onEvent(HomeScreenEvent.FilterSelected)
-                                        Toast.makeText(context, "closed", Toast.LENGTH_SHORT).show()
+                                        viewModel.onEvent(HomeScreenEvent.FilterUnSelected)
                                     }
                             )
 
