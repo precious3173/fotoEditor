@@ -21,5 +21,6 @@ data class HomeUiState(
     var openDialog: Boolean = false,
     var closeDialog: Boolean = true,
     var  snackDuration: Long = 3000L,
-    var editedImageUri: Uri? = null
+    var editedImageUri: Uri? = null,
+    var filterSelected: Boolean = false
 )

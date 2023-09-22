@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -252,66 +254,92 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
                 AnimatedVisibility(visible = uiState.hasPhotoImported) {
                     BottomBar {
-                        BottomBarDefaults.items.forEachIndexed { index, item ->
-                            val looksTextColor by animateColorAsState(
-                                targetValue =
-                                if (uiState.shouldExpandLooks) {
-                                    Color.Blue.copy(0.4f)
-                                } else Color.Gray, label = "LooksTextColor"
+                        if (uiState.filterSelected){
+                            Icon(
+                                painterResource(id = R.drawable.cross_23),
+                                contentDescription = null,
+                                modifier = Modifier.wrapContentSize().
+                                padding(top = 20.dp, bottom = 10.dp)
+                                    .clickable {
+                                        viewModel.onEvent(HomeScreenEvent.FilterSelected)
+                                        Toast.makeText(context, "closed", Toast.LENGTH_SHORT).show()
+                                    }
                             )
-                            val toolsTextColor by animateColorAsState(
-                                targetValue =
-                                if (uiState.shouldExpandTools) {
-                                    Color.Blue.copy(0.4f)
-                                } else Color.Gray, label = "ToolsTextColor"
+
+                            Icon(
+                                painterResource(id = R.drawable.check),
+                                contentDescription = null,
+                                modifier = Modifier.wrapContentSize()
+                                    .padding(top = 20.dp, bottom = 10.dp)
+                                    .clickable {
+
+                                    }
                             )
-                            val exportTextColor by animateColorAsState(
-                                targetValue =
+                        }
+                        else{
+
+                            BottomBarDefaults.items.forEachIndexed { index, item ->
+                                val looksTextColor by animateColorAsState(
+                                    targetValue =
+                                    if (uiState.shouldExpandLooks) {
+                                        Color.Blue.copy(0.4f)
+                                    } else Color.Gray, label = "LooksTextColor"
+                                )
+                                val toolsTextColor by animateColorAsState(
+                                    targetValue =
+                                    if (uiState.shouldExpandTools) {
+                                        Color.Blue.copy(0.4f)
+                                    } else Color.Gray, label = "ToolsTextColor"
+                                )
+                                val exportTextColor by animateColorAsState(
+                                    targetValue =
                                     if (uiState.shouldExpandExport){
                                         Color.Blue.copy(0.4f)
                                     }
                                     else Color.Gray, label = "ExportTextColor"
-                            )
+                                )
 
-                            Box(
-                                Modifier
-                                    .weight(1f)
-                                    .clickable(
-                                        enabled = true,
-                                        onClick = {
-                                            when (index) {
-                                                0 -> viewModel.onEvent(HomeScreenEvent.ToggleLooks)
-
-                                                1 -> viewModel.onEvent(HomeScreenEvent.ToggleTools)
-
-                                                2 -> viewModel.onEvent(HomeScreenEvent.ToggleExport)
-                                                else -> Unit
-                                            }
-                                        },
-                                        role = Role.Button,
-                                    ), contentAlignment = Alignment.Center
-                            ) {
                                 Box(
                                     Modifier
-                                        .padding(vertical = 12.dp)
-                                            ,
-                                    contentAlignment = Alignment.Center
+                                        .weight(1f)
+                                        .clickable(
+                                            enabled = true,
+                                            onClick = {
+                                                when (index) {
+                                                    0 -> viewModel.onEvent(HomeScreenEvent.ToggleLooks)
 
-                                ) {
-                                    Text(
-                                        text = item.title,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            color = when (index) {
-                                                0 -> looksTextColor
-                                                1 -> toolsTextColor
-                                                2 -> exportTextColor
-                                                else -> Color.Gray
+                                                    1 -> viewModel.onEvent(HomeScreenEvent.ToggleTools)
+
+                                                    2 -> viewModel.onEvent(HomeScreenEvent.ToggleExport)
+                                                    else -> Unit
+                                                }
                                             },
-                                        ),
-                                    )
+                                            role = Role.Button,
+                                        ), contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        Modifier
+                                            .padding(vertical = 12.dp)
+                                        ,
+                                        contentAlignment = Alignment.Center
+
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                color = when (index) {
+                                                    0 -> looksTextColor
+                                                    1 -> toolsTextColor
+                                                    2 -> exportTextColor
+                                                    else -> Color.Gray
+                                                },
+                                            ),
+                                        )
+                                    }
                                 }
                             }
                         }
+
                     }
                 }
             }
@@ -367,7 +395,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         if (uiState.shouldExpandExport) {
             val context = LocalContext.current
-            var snackDuration by remember { mutableStateOf(5000L)}
+            var snackDuration by remember { mutableStateOf(4000L)}
                 ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
@@ -408,9 +436,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         try {
-                                                            viewModel.onEvent(HomeScreenEvent.LoadEditedImageUri(uiState.importedImageUri!!))
-                                                        }
-                                                        catch (e: Exception){
+                                                            viewModel.onEvent(
+                                                                HomeScreenEvent.LoadEditedImageUri(
+                                                                    uiState.importedImageUri!!
+                                                                )
+                                                            )
+                                                        } catch (e: Exception) {
                                                             e.stackTrace
                                                         }
 
@@ -422,6 +453,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
 
                                                     }
+
                                                     "Export" -> {
                                                         accessStorage()
                                                         SaveImage.SaveImageToGallery.saveToGallery(
@@ -433,9 +465,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         try {
-                                                            viewModel.onEvent(HomeScreenEvent.LoadEditedImageUri(uiState.importedImageUri!!))
-                                                        }
-                                                        catch (e: Exception){
+                                                            viewModel.onEvent(
+                                                                HomeScreenEvent.LoadEditedImageUri(
+                                                                    uiState.importedImageUri!!
+                                                                )
+                                                            )
+                                                        } catch (e: Exception) {
                                                             e.stackTrace
                                                         }
 
@@ -447,8 +482,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
 
                                                     }
+
                                                     "Export as" -> {
-                                                     ExportAs.ExportToDownload.ExportAs(context, uiState.importedImageUri!!)
+                                                        ExportAs.ExportToDownload.ExportAs(
+                                                            context,
+                                                            uiState.importedImageUri!!
+                                                        )
                                                     }
                                                 }
                                             }
@@ -796,7 +835,10 @@ private fun HomeScreenContent(
                                                             HomeScreenEvent.UpdateFilter(
                                                                 index
                                                             )
+
                                                         )
+                                                        onEvent(HomeScreenEvent.FilterSelected)
+
                                                     }
                                                 ), contentAlignment = Alignment.Center) {
                                                 importedImageUri?.let {
@@ -825,10 +867,12 @@ private fun HomeScreenContent(
 
                                         }
 
+
                                     }
                                 }
                             }
                         }
+
                     }
 
                 }

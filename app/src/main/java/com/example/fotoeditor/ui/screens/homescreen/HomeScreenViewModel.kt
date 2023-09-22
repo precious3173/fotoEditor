@@ -60,6 +60,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.OnOpenDialog -> onAlertDialog()
             is HomeScreenEvent.OnCloseDialog -> onCloseDialog()
             is HomeScreenEvent.LoadEditedImageUri -> onLoadEditedImageUri(event.uri)
+            is HomeScreenEvent.FilterSelected  -> onFilterSelected()
         }
     }
 
@@ -261,6 +262,13 @@ class HomeScreenViewModel @Inject constructor(
         _uiState.update { it.copy(selectedToolId = id) }
     }
 
+    private fun onFilterSelected(){
+            _uiState.update {
+                it.copy(
+                    filterSelected = true
+                )
+            }
+    }
     private fun getPreviewImage(originalImage: Bitmap?): Bitmap? {
         return kotlin.runCatching {
             val previewWidth = checkNotNull(originalImage?.width)
@@ -300,4 +308,6 @@ sealed interface HomeScreenEvent : Event {
     data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent
     data class LoadImageFilters(val imageBitmap: Bitmap?) : HomeScreenEvent
     object SaveFilteredImage: HomeScreenEvent
+
+    object FilterSelected:  HomeScreenEvent
 }
