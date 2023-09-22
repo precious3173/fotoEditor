@@ -90,7 +90,7 @@ class SaveImage() {
 
                }
                if (!bitmap.compress(
-                       Bitmap.CompressFormat.PNG, 100,
+                       Bitmap.CompressFormat.JPEG, 100,
                        outputStream!!
                    )
                )

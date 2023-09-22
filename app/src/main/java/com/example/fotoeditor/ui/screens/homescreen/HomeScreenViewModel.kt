@@ -2,10 +2,14 @@ package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,10 +67,25 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.LoadEditedImageUri -> onLoadEditedImageUri(event.uri)
             is HomeScreenEvent.FilterSelected  -> onFilterSelected()
             is HomeScreenEvent.FilterUnSelected  -> onFilterUnSelected()
+            is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.bitmap)
+            is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
+            is  HomeScreenEvent.cancelEdit -> onCancelEdit()
 
         }
     }
 
+    private fun onCancelEdit(){
+
+        CoroutineScope(Dispatchers.IO).launch {
+            _uiState.update {
+                it.copy(
+                    shouldCancelEdit = true
+                )
+
+            }
+
+        }
+    }
     private fun onLoadImageFilters(imageBitmap: Bitmap?) {
         viewModelScope.launch(Dispatchers.IO) {
             kotlin.runCatching {
@@ -117,6 +137,35 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    private fun onFilterSelectedForUSe (bitmap: Bitmap?){
+        val contentResolver: ContentResolver = context.contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            // Add other metadata like title, description, etc., if needed
+        }
+
+        // Insert the image into the MediaStore and get its URI
+        val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        try {
+            imageUri?.let { uri ->
+                var outputStream = contentResolver.openOutputStream(uri)
+                bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, outputStream!!)
+                outputStream?.close()
+
+
+                _uiState.update {
+                    it.copy(
+                        filterSelectedForUSe = uri
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
     private fun updateFilterOnImage(newBitmap: Bitmap?) {
         _uiState.update { it.copy(filteredImageBitmap = newBitmap) }
     }
@@ -165,11 +214,13 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private fun updateFilter(index: Int) {
-        _uiState.update {
-            it.copy(
-                selectedFilter = index,
-            )
-        }
+
+             _uiState.update {
+                 it.copy(
+                     selectedFilter = index,
+                 )
+             }
+
     }
 
     private fun onOpenOptionsMenu() {
@@ -279,6 +330,13 @@ class HomeScreenViewModel @Inject constructor(
             )
         }
     }
+    private fun onSendEditedUri(){
+        _uiState.update {
+            it.copy(
+                shouldSendEditedImageUri = true
+            )
+        }
+    }
     private fun getPreviewImage(originalImage: Bitmap?): Bitmap? {
         return kotlin.runCatching {
             val previewWidth = checkNotNull(originalImage?.width)
@@ -289,6 +347,7 @@ class HomeScreenViewModel @Inject constructor(
         }.getOrDefault(originalImage)
     }
 }
+
 
 
 sealed interface HomeScreenEvent : Event {
@@ -317,8 +376,13 @@ sealed interface HomeScreenEvent : Event {
     data class SelectTool(val id: Int) : HomeScreenEvent
     data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent
     data class LoadImageFilters(val imageBitmap: Bitmap?) : HomeScreenEvent
+
+    data class FilterSelectedForUse(val bitmap: Bitmap?) : HomeScreenEvent
     object SaveFilteredImage: HomeScreenEvent
 
     object FilterSelected:  HomeScreenEvent
     object FilterUnSelected:  HomeScreenEvent
+
+    object SendEditedUri: HomeScreenEvent
+    object cancelEdit: HomeScreenEvent
 }

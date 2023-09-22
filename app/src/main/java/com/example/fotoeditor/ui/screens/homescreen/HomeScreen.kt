@@ -56,6 +56,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -103,9 +104,14 @@ import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Exception
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.coroutines.coroutineContext
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -114,6 +120,8 @@ import java.lang.Exception
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     val context = LocalContext.current
     var isVisible by remember { mutableStateOf(false) }
+    var onCancel by remember { mutableStateOf(false) }
+    val snackDuration by remember { mutableStateOf(1000L)}
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -246,11 +254,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandExport = uiState.shouldExpandExport,
                     openDialog = uiState.openDialog,
                     isVisbile = isVisible,
-                    editedImage = uiState.editedImageUri
+                    editedImage = uiState.editedImageUri,
+                    cancelEdits = onCancel
                 )
             },
             bottomBar = {
-
+                val coroutineScope = rememberCoroutineScope()
 
                 AnimatedVisibility(visible = uiState.hasPhotoImported) {
                     BottomBar {
@@ -258,19 +267,42 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             Icon(
                                 painterResource(id = R.drawable.cross_23),
                                 contentDescription = null,
-                                modifier = Modifier.wrapContentSize().
-                                padding(top = 20.dp, bottom = 10.dp)
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .padding(top = 20.dp, bottom = 10.dp)
                                     .clickable {
                                         viewModel.onEvent(HomeScreenEvent.FilterUnSelected)
+//                                        onCancel = true
+//
+//                                        val timer = Timer()
+//                                        timer.schedule(object : TimerTask() {
+//                                            override fun run() {
+//                                                onCancel = false // Reset the flag to false
+//                                                timer.cancel() // Cancel the timer
+//                                            }
+//                                        }, 2000)
+                                        viewModel.onEvent(
+                                            HomeScreenEvent.UpdateFilter(
+                                                0
+                                            ))
+                                       //     viewModel.onEvent(HomeScreenEvent.cancelEdit)
+
+
                                     }
                             )
 
                             Icon(
                                 painterResource(id = R.drawable.check),
                                 contentDescription = null,
-                                modifier = Modifier.wrapContentSize()
+                                modifier = Modifier
+                                    .wrapContentSize()
                                     .padding(top = 20.dp, bottom = 10.dp)
                                     .clickable {
+                                        coroutineScope.launch {
+                                            uiState.shouldSendEditedImageUri =
+                                                !uiState.shouldSendEditedImageUri
+                                            viewModel.onEvent(HomeScreenEvent.FilterUnSelected)
+                                        }
 
                                     }
                             )
@@ -394,7 +426,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         if (uiState.shouldExpandExport) {
             val context = LocalContext.current
-            var snackDuration by remember { mutableStateOf(4000L)}
+            val snackDuration by remember { mutableStateOf(4000L)}
                 ExportBottomSheet(
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
@@ -556,7 +588,8 @@ private fun HomeScreen(
     shouldExpandExport: Boolean,
     openDialog: Boolean,
     isVisbile: Boolean,
-    editedImage: Uri?
+    editedImage: Uri?,
+    cancelEdits: Boolean
 
 ) {
     val offset = 20
@@ -598,7 +631,8 @@ private fun HomeScreen(
             onEvent = onEvent,
             openDialog = openDialog,
             isVisible = isVisbile,
-            editedImage = editedImage
+            editedImage = editedImage,
+            cancelEdit = cancelEdits
         )
     }
 }
@@ -616,9 +650,11 @@ private fun HomeScreenContent(
     imageFilters: List<ImageFilter> = listOf(),
     openDialog: Boolean,
     isVisible: Boolean,
-    editedImage: Uri?
+    editedImage: Uri?,
+    cancelEdit:Boolean
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
+
         when (targetState) {
             //when no image has been imported
             false -> {
@@ -658,15 +694,18 @@ private fun HomeScreenContent(
             //with image imported
             true -> {
                 val context = LocalContext.current
+
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+
                     Column(
                         Modifier
                             .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        //the preview image
+                        //the preview
                         importedImageUri?.let {
+
                             AsyncImage(
                                 model = it,
                                 contentDescription = null,
@@ -720,6 +759,7 @@ private fun HomeScreenContent(
 
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
+                            var coroutineScope = rememberCoroutineScope()
                             LooksBottomSheet {
 //                                imageFilters.map { filter ->
 //                                    Box(
@@ -810,6 +850,7 @@ private fun HomeScreenContent(
                                         Modifier.padding(4.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
+
                                         val toolColor by animateColorAsState(
                                             targetValue = if (index == selectedFilter) Color.Blue.copy(
                                                 0.4f
@@ -830,13 +871,16 @@ private fun HomeScreenContent(
                                                 .selectable(
                                                     selected = true,
                                                     onClick = {
-                                                        onEvent(
-                                                            HomeScreenEvent.UpdateFilter(
-                                                                index
-                                                            )
+                                                     coroutineScope.launch(Dispatchers.IO){
+                                                         onEvent(
+                                                             HomeScreenEvent.UpdateFilter(
+                                                                 index
+                                                             )
 
-                                                        )
-                                                        onEvent(HomeScreenEvent.FilterSelected)
+                                                         )
+                                                         onEvent(HomeScreenEvent.FilterSelected)
+                                                     }
+
 
                                                     }
                                                 ), contentAlignment = Alignment.Center) {
@@ -856,6 +900,7 @@ private fun HomeScreenContent(
                                                                 )
                                                             )
                                                         )
+                                                       // onEvent(HomeScreenEvent.FilterSelectedForUse(bitmap = bitmap))
                                                     }
                                                 }
                                             }
