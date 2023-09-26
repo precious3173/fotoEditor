@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.ui.graphics.Canvas
 import android.graphics.Paint
+import android.media.MediaScannerConnection
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
@@ -168,8 +169,30 @@ class HomeScreenViewModel @Inject constructor(
                     imageFile
                 )
 
+
                 if (uri != null) {
 
+              MediaScannerConnection.scanFile(
+                  context,
+                  arrayOf(outputFilePath),
+                  arrayOf("image/jpeg")
+              ) { _, uri2 ->
+                  if (uri2 != null) {
+                      // The image has been successfully scanned
+                      Toast.makeText(
+                          context,
+                          "Image saved and scanned successfully",
+                          Toast.LENGTH_SHORT
+                      ).show()
+                  } else {
+                      // Failed to scan the image
+                      Toast.makeText(
+                          context,
+                          "Failed to scan the image",
+                          Toast.LENGTH_SHORT
+                      ).show()
+                  }
+              }
 
                     _uiState.update { it.copy(filterSelectedForUSe = uri) }
                     _uiState.update {

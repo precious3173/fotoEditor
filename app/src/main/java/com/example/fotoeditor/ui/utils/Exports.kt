@@ -31,7 +31,7 @@ object ExportLibrary {
             id = 3,
             title = "Export",
             description = "Create a copy of your photo. Sizing, format and quality can be changed in the settings menu.",
-            icon = R.drawable.jpeg,
+            icon = R.drawable.jpg,
         ),
         Exports(
             id = 4,

@@ -248,7 +248,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     shouldExpandExport = uiState.shouldExpandExport,
                     openDialog = uiState.openDialog,
                     isVisbile = isVisible,
-                    editedImage = uiState.editedImageUri,
+                    editedImage = uiState.filterSelectedForUSe,
                     shouldSendEditedImageUri = uiState.shouldSendEditedImageUri,
                     isUiState = isUiState
                 )
@@ -508,7 +508,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                     "Export as" -> {
                                                         ExportAs.ExportToDownload.ExportAs(
                                                             context,
-                                                            uiState.importedImageUri!!
+                                                            uiState.filterSelectedForUSe!!
                                                         )
                                                     }
                                                 }
