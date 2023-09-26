@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.compose.ui.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fotoeditor.domain.EditImageRepository
@@ -161,7 +162,11 @@ class HomeScreenViewModel @Inject constructor(
                 outputStream.close()
 
                 val imageFile = File(outputFilePath)
-                val uri = Uri.fromFile(imageFile)
+               // val uri = Uri.fromFile(imageFile)
+                val uri = FileProvider.getUriForFile(
+                    context, "com.example.fotoEditor.provider",
+                    imageFile
+                )
 
                 if (uri != null) {
 
