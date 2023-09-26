@@ -2,19 +2,18 @@ package com.example.fotoeditor.ui.screens.homescreen
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import android.widget.Toast
+import androidx.compose.ui.graphics.Canvas
+import android.graphics.Paint
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +31,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,7 +72,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.LoadEditedImageUri -> onLoadEditedImageUri(event.uri)
             is HomeScreenEvent.FilterSelected  -> onFilterSelected()
             is HomeScreenEvent.FilterUnSelected  -> onFilterUnSelected()
-            is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.bitmap)
+            is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.uri, event.bitmap, event.colorFilter)
             is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
 
 
@@ -126,34 +131,59 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private fun onFilterSelectedForUSe (bitmap: Bitmap?){
-        val contentResolver: ContentResolver = context.contentResolver
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            // Add other metadata like title, description, etc., if needed
-        }
+    @SuppressLint("SuspiciousIndentation", "Recycle")
+    private fun onFilterSelectedForUSe (uriImport: Uri?, bitmap: Bitmap?, colorFilterArray: FloatArray) {
+        if (_uiState.value.shouldSendEditedImageUri) {
 
-        // Insert the image into the MediaStore and get its URI
-        val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            val filteredBitmap = bitmap!!.copy(Bitmap.Config.ARGB_8888, true)
+            val canvas = android.graphics.Canvas(filteredBitmap)
+            val paint = Paint()
 
-        try {
-            imageUri?.let { uri ->
-                var outputStream = contentResolver.openOutputStream(uri)
-                bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, outputStream!!)
-                outputStream?.close()
+            val colorMatrix = android.graphics.ColorMatrix(colorFilterArray)
+
+            paint.colorFilter = android.graphics.ColorMatrixColorFilter(colorMatrix)
+
+            canvas.drawBitmap(filteredBitmap, 0f, 0f, paint)
 
 
-                _uiState.update {
-                    it.copy(
-                        filterSelectedForUSe = uri
-                    )
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val outputFileName = "filtered_image_$timeStamp.jpg"
+
+            val storageDirectory = File(Environment.getExternalStorageDirectory(), "fotoeditor")
+            storageDirectory.mkdirs() // Create the directory if it doesn't exist
+
+            val outputFilePath = File(storageDirectory, outputFileName).absolutePath
+
+
+            try {
+                val outputStream = FileOutputStream(outputFilePath)
+                filteredBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                outputStream.close()
+
+                val imageFile = File(outputFilePath)
+                val uri = Uri.fromFile(imageFile)
+
+                if (uri != null) {
+
+
+                    _uiState.update { it.copy(filterSelectedForUSe = uri) }
+                    _uiState.update {
+                        it.copy(filterSelected = false)
+                    }
+                    Toast.makeText(context, "uri is not empty", Toast.LENGTH_SHORT).show()
+                } else {
+                    _uiState.update { it.copy(filterSelectedForUSe = uriImport) }
+                    Toast.makeText(context, "uri is empty", Toast.LENGTH_SHORT).show()
                 }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
 
+
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error saving the image.", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+            }
+        }
     }
+
 
     private fun updateFilterOnImage(newBitmap: Bitmap?) {
         _uiState.update { it.copy(filteredImageBitmap = newBitmap) }
@@ -319,11 +349,22 @@ class HomeScreenViewModel @Inject constructor(
             )
         }
     }
-    private fun onSendEditedUri(){
+    private fun  onSendEditedUri(){
         _uiState.update {
             it.copy(
                 shouldSendEditedImageUri = true
+
             )
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+
+            delay(1000L)
+            _uiState.update {
+                it.copy(
+                    shouldSendEditedImageUri = false
+
+                )
+            }
         }
     }
     private fun getPreviewImage(originalImage: Bitmap?): Bitmap? {
@@ -366,7 +407,7 @@ sealed interface HomeScreenEvent : Event {
     data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent
     data class LoadImageFilters(val imageBitmap: Bitmap?) : HomeScreenEvent
 
-    data class FilterSelectedForUse(val bitmap: Bitmap?) : HomeScreenEvent
+    data class FilterSelectedForUse(val uri: Uri?, val bitmap: Bitmap, var colorFilter: FloatArray) : HomeScreenEvent
     object SaveFilteredImage: HomeScreenEvent
 
     object FilterSelected:  HomeScreenEvent

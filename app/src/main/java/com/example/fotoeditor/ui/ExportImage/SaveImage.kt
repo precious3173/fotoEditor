@@ -29,6 +29,7 @@ class SaveImage() {
            var imageUri: Uri? = null
            var imagesDir: File? = null
            var imageFile: File? = null
+           var newUri: Uri? = null
            val timeStamp: String =
                SimpleDateFormat("yyyyMMdd_HHmmss").format(
                    Date()
@@ -57,7 +58,7 @@ class SaveImage() {
                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                        contentValues
                    )
-                   val newUri =
+                    newUri =
                        resolver.insert(
                            imageUri!!,
                            contentValues
@@ -94,6 +95,7 @@ class SaveImage() {
                        outputStream!!
                    )
                )
+
                    throw IOException("Failed to save bitmap.");
                outputStream.flush();
 
@@ -110,6 +112,16 @@ class SaveImage() {
            } finally {
                if (outputStream != null)
                    outputStream.close();
+
+               // Notify the MediaStore to scan for the new image
+               MediaScannerConnection.scanFile(
+                   context,
+                   arrayOf(File(newUri!!.path).absolutePath),
+                   arrayOf("image/jpeg")
+               ){
+                   path, uri ->
+
+               }
            }
 
        }
