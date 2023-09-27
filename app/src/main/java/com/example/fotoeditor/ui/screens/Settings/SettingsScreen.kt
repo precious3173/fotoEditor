@@ -2,7 +2,6 @@ package com.example.fotoeditor.ui.screens.Settings
 
 import android.annotation.SuppressLint
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -12,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,37 +18,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fotoeditor.R
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnrememberedMutableState")
 @Composable
 fun SettingScreen() {
 
-
-    var isDarkMode by remember { mutableStateOf(AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) }
-   // var darkMode by remember { mutableStateOf(false) }
-
-    val systemBarsColor = if (isSystemInDarkTheme()) {
-        Color.DarkGray // Dark theme system bars color
-    } else {
-        Color.White // Light theme system bars color
-    }
-
+   // var isDarkTheme by remember { mutableStateOf(false) }
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+     var textColor: Color
+    var isDarkTheme  by remember { mutableStateOf(isSystemInDarkTheme) }
 
 
     val context = LocalContext.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    Surface( modifier = Modifier
-        .fillMaxSize()){
-
+    AppTheme(
+        isDarkTheme = isDarkTheme,
+        content = {
+            if (isDarkTheme) textColor = Color.White
+            else textColor = Color.Black
 
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(text = stringResource(id = R.string.settings)) },
-
-                    )
+                    backgroundColor = MaterialTheme.colors.background,
+                    contentColor = textColor
+                )
             },
 
-        ) {
+            ) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -59,34 +54,36 @@ fun SettingScreen() {
                 Text(
                     text = "Appearance",
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color.Blue,
+                    style = MaterialTheme.typography.h4,
                     modifier = Modifier
                         .padding(bottom = 5.dp)
 
                 )
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
 
                     Text(
                         text = "Dark theme",
                         fontSize = 16.sp,
-                        color = Color.White
+                        color = textColor
 
                     )
                     Switch(
-                        checked = isDarkMode,
+                        checked = isDarkTheme,
                         onCheckedChange = { checked ->
-                            isDarkMode = checked
-                            val mode = if (checked) AppCompatDelegate.MODE_NIGHT_YES
-                            else AppCompatDelegate.MODE_NIGHT_NO
-                            AppCompatDelegate.setDefaultNightMode(mode)
+                            isDarkTheme = checked
+
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.Blue,
                             uncheckedThumbColor = Color.White
                         ),
 
-                    )
+                        )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -110,13 +107,13 @@ fun SettingScreen() {
                         text = "Image sizing",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = textColor
 
                     )
                     Text(
                         text = "Do not resize",
                         fontSize = 14.sp,
-                        color = Color.White
+                        color = textColor
 
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -124,13 +121,13 @@ fun SettingScreen() {
                     Text(
                         text = stringResource(id = R.string.image_sizing_text),
                         fontSize = 14.sp,
-                        color = Color.White
+                        color = textColor
 
                     )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                Divider(color = Color.White)
+                Divider(color = textColor)
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(modifier = Modifier
@@ -144,13 +141,13 @@ fun SettingScreen() {
                         text = "Format and quality",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = textColor
 
                     )
                     Text(
                         text = "JPG 95%",
                         fontSize = 14.sp,
-                        color = Color.White
+                        color = textColor
 
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -158,16 +155,16 @@ fun SettingScreen() {
                     Text(
                         text = stringResource(id = R.string.format_text),
                         fontSize = 14.sp,
-                        color = Color.White
+                        color = textColor
 
                     )
                 }
             }
 
         }
-    }
-
+    })
 }
+
 
 @Preview
 @Composable
