@@ -250,7 +250,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     isVisbile = isVisible,
                     editedImage = uiState.filterSelectedForUSe,
                     shouldSendEditedImageUri = uiState.shouldSendEditedImageUri,
-                    isUiState = isUiState
+                    isUiState = isUiState,
+                    navigator = navigator
                 )
             },
             bottomBar = {
@@ -581,7 +582,8 @@ private fun HomeScreen(
     isVisbile: Boolean,
     editedImage: Uri?,
     shouldSendEditedImageUri: Boolean,
-    isUiState: Boolean
+    isUiState: Boolean,
+    navigator: Navigator
 
 ) {
     val offset = 20
@@ -605,6 +607,7 @@ private fun HomeScreen(
         OptionsMenu(
             onDismiss = { onEvent(HomeScreenEvent.HideOptionsMenu) },
             state = shouldShowOptionsMenu,
+            navigator = navigator
         )
     }
 

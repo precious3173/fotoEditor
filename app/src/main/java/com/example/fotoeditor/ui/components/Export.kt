@@ -32,6 +32,7 @@ fun ExportItem(
     Row(
       modifier = Modifier
           .fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(space = 15.dp)
     ) {
         Icon(

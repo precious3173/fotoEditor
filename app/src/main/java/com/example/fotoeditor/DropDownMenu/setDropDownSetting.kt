@@ -11,12 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.fotoeditor.ui.nav.Navigator
+import com.example.fotoeditor.ui.nav.Screen
 
 
 @Composable
 fun OptionsMenu(
     state: Boolean,
     onDismiss: () -> Unit,
+    navigator: Navigator
 ) {
     Column(
         modifier = Modifier
@@ -31,7 +34,7 @@ fun OptionsMenu(
         {
             DropdownMenuItem(
                 text = { Text("Settings") },
-                onClick = onDismiss
+                onClick = {navigator.navigateTo("settings_screen")}
             )
 
             DropdownMenuItem(

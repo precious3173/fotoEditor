@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.fotoeditor.ui.screens.Settings.SettingScreen
 import com.example.fotoeditor.ui.screens.homescreen.HomeRoute
 import com.example.fotoeditor.ui.screens.SplashScreen
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageRoute
@@ -41,6 +42,11 @@ fun NavigationController() {
 
         fotoComposable(Screen.HomeScreen.route) {
             HomeRoute(navigator = appNavigator, viewModel = homeScreenViewModel)
+        }
+
+        fotoComposable(Screen.SettingsScreen.route){
+            SettingScreen()
+
         }
 
         fotoComposable(

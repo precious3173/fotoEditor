@@ -2,4 +2,14 @@
     <string name="app_name">fotoEditor</string>
     <string name="tap_anywhere_to_open_a_photo">Tap anywhere to open a photo</string>
     <string name="open">OPEN</string>
+    <string name="settings">Settings</string>
+    <string name="image_sizing_text">
+        Choose the maximum image size for export and sharing. The given sizes refer to the long edge
+        of the image (for example, to the width for the landscape images) and would only apply to
+        images larger than the selected value. Smaller images will not be enlarged.
+    </string>
+    <string name="format_text">
+        Choose the format and quality rate that will be applied whilst exporting or sharing images.
+        JPG 100% will give the best jpeg-image at the cost of increased file size.
+    </string>
 </resources>
