@@ -1,8 +1,5 @@
 package com.example.fotoeditor.ui.screens.Settings
 
-
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,18 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
-import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 
 @Composable
-fun DialogImageSizing(
+fun DialogFormat(
     onDismiss: () -> Unit,
     isDarkTheme: Boolean,
-
 ) {
-
-
-
     val CustomColorScheme = Colors(
         primary = Color.White,
         primaryVariant = Color.White,
@@ -68,7 +59,7 @@ fun DialogImageSizing(
         surface = Color.DarkGray,
         error = Color.DarkGray,
         onPrimary = Color.DarkGray,
-        onSecondary =Color.DarkGray,
+        onSecondary = Color.DarkGray,
         onBackground = Color.DarkGray,
         onSurface = Color.DarkGray,
         onError = Color.DarkGray,
@@ -88,19 +79,17 @@ fun DialogImageSizing(
                 else Color.Black
                 var selectedOption = remember { mutableStateOf(0) }
                 val backgroundColor = if (isDarkTheme) CustomColorSchemeDark else CustomColorScheme
-                val imageSizeManager = ImageSizeManager(LocalContext.current)
+                val formatManager = FormatManager(LocalContext.current)
 
 
 
 
 
                 val options = listOf(
-                    "Do not resize",
-                    "4000 px",
-                    "2000 px",
-                    "1920 px",
-                    "1366 px",
-                    "800 px"
+                    "JPG 100%",
+                    "JPG 95%",
+                    "JPG 80%",
+                    "PNG"
                 )
                 AlertDialog(onDismissRequest = { onDismiss() },
                     backgroundColor = backgroundColor.background,
@@ -108,47 +97,47 @@ fun DialogImageSizing(
                         Column {
 
 
-                        Text(
-                            text = "Image sizing",
-                            fontSize = 20.sp,
-                            color = textColor,
-                            fontWeight = FontWeight.Bold
-                        )
+                            Text(
+                                text = "Format and quality",
+                                fontSize = 20.sp,
+                                color = textColor,
+                                fontWeight = FontWeight.Bold
+                            )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
                             options.forEachIndexed{ index, item ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                )
+                                {
+                                    RadioButton(
+                                        selected = index == selectedOption.value,
+                                        onClick = {selectedOption.value = index
+                                            if (selectedOption.value == index){
+                                                formatManager.setSelectedFormat(item)
+                                                //   viewModel.onEvent(HomeScreenEvent.ImageSizingUpdate(item))
+                                                onDismiss()
+                                            }
+                                        },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = Color.Blue,
+                                            unselectedColor = textColor
+                                        ),
+
+
+                                        )
+
+                                    Text(
+                                        text = item,
+                                        fontSize = 16.sp,
+                                        color = textColor
                                     )
-                                    {
-                                        RadioButton(
-                                            selected = index == selectedOption.value,
-                                            onClick = {selectedOption.value = index
-                                                      if (selectedOption.value == index){
-                                                          imageSizeManager.setSelectedImageSize(item)
-                                                       //   viewModel.onEvent(HomeScreenEvent.ImageSizingUpdate(item))
-                                                          onDismiss()
-                                                      }
-                                                      },
-                                            colors = RadioButtonDefaults.colors(
-                                                selectedColor = Color.Blue,
-                                                unselectedColor = textColor
-                                            ),
-
-
-                                        )
-
-                                        Text(
-                                            text = item,
-                                            fontSize = 16.sp,
-                                            color = textColor
-                                        )
-                                    }
-
                                 }
+
                             }
+                        }
                     },
                     buttons = {
                         Row(
@@ -169,6 +158,6 @@ fun DialogImageSizing(
 
 
 
-    })
+            })
     }
 }

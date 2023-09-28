@@ -25,18 +25,13 @@ import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 @Composable
 fun SettingScreen(viewModel: HomeScreenViewModel) {
 
-  //  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val themeManager = ThemeManager(LocalContext.current)
-
-       //  val imageSize = uiState.imageSizing
-
-
     val imageSizeManager = ImageSizeManager(LocalContext.current)
-
-
-        // imageSizeManager.setSelectedImageSize(imageSize)
+    val formatManager = FormatManager(LocalContext.current)
 
 val selectedImageSize = imageSizeManager.getSelectedImageSize()
+    val selectedFormat = formatManager.getSelectedFormat()
 
     var setImageSize:String? = null
 
@@ -46,10 +41,23 @@ val selectedImageSize = imageSizeManager.getSelectedImageSize()
         setImageSize = selectedImageSize
     }
 
+
+    var setFormat:String? = null
+
+    if (selectedFormat.isNullOrEmpty()) {
+        setFormat= "JPG 100%"
+    } else {
+        setFormat = selectedFormat
+    }
+
      var textColor: Color
      var isDialog by remember {
          mutableStateOf(false)
      }
+
+    var isFormatDialog by remember {
+        mutableStateOf(false)
+    }
     var isDarkTheme  by remember { mutableStateOf(themeManager.getSelectedTheme() == ThemeManager.THEME_DARK) }
 
 
@@ -157,9 +165,7 @@ val selectedImageSize = imageSizeManager.getSelectedImageSize()
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(modifier = Modifier
                     .clickable {
-                        Toast
-                            .makeText(context, "hmm", Toast.LENGTH_SHORT)
-                            .show()
+                       isFormatDialog = !isFormatDialog
                     }
                     .padding(bottom = 6.dp)) {
                     Text(
@@ -170,7 +176,7 @@ val selectedImageSize = imageSizeManager.getSelectedImageSize()
 
                     )
                     Text(
-                        text = "JPG 95%",
+                        text = setFormat,
                         fontSize = 14.sp,
                         color = textColor
 
@@ -191,9 +197,14 @@ val selectedImageSize = imageSizeManager.getSelectedImageSize()
 
     if (isDialog){
        DialogImageSizing(onDismiss = {isDialog = !isDialog},
-         isDarkTheme, context,
-           viewModel
+         isDarkTheme
            )
+    }
+
+    if (isFormatDialog){
+        DialogFormat(onDismiss = {isFormatDialog = !isFormatDialog},
+            isDarkTheme
+        )
     }
 }
 
