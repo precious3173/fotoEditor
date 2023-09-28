@@ -26,6 +26,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -100,6 +101,7 @@ import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.ExportImage.SaveImage
+import com.example.fotoeditor.ui.screens.Settings.ThemeManager
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -114,6 +116,19 @@ import java.lang.Exception
 @Composable
 fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     val context = LocalContext.current
+    var backgroundColor: Color? = null
+    var textColor: Color? = null
+
+    val themeManager = ThemeManager(LocalContext.current)
+    val isDarkTheme by remember { mutableStateOf(themeManager.getSelectedTheme() == ThemeManager.THEME_DARK) }
+    if (!isDarkTheme){
+        backgroundColor = MaterialTheme.colorScheme.background
+        textColor = Color.Black
+    }
+    else {
+        backgroundColor = MaterialTheme.colorScheme.onBackground
+        textColor = Color.White
+    }
     var isVisible by remember { mutableStateOf(false) }
     var isUiState by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -173,6 +188,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Scaffold(
             modifier = Modifier.padding(0.dp),
+            backgroundColor = backgroundColor,
             topBar = {
                 SimpleTopAppBar(
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -184,13 +200,13 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             Text(
                                 text = stringResource(id = R.string.open),
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    color = Color.Black
+                                    color = textColor
                                 ),
                             )
                         }
                     },
                     actions = {
-                        HomeMenuDefaults.menus.forEachIndexed { _, homeMenuItem ->
+                        HomeMenuDefaults.isDarkTheme(isDarkTheme).forEachIndexed { _, homeMenuItem ->
                             val enabled = when (homeMenuItem.contentDesc) {
                                 "menu_info" -> uiState.hasPhotoImported
                                 else -> true
@@ -210,6 +226,12 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                         onClick = {
                                             if (homeMenuItem.contentDesc == "menu_more_items") {
                                                 viewModel.onEvent(HomeScreenEvent.OpenOptionsMenu)
+                                                Toast.makeText(
+                                                    context,
+                                                    "info icon",
+                                                    Toast.LENGTH_LONG
+                                                )
+                                                    .show()
                                             } else if (homeMenuItem.contentDesc == "menu_info") {
                                                 Toast.makeText(
                                                     context,
@@ -223,9 +245,11 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                         Icon(
                                             painterResource(id = homeMenuItem.icon),
                                             contentDescription = homeMenuItem.contentDesc,
+                                            tint = homeMenuItem.color,
                                             modifier = Modifier.semantics {
                                                 contentDescription = homeMenuItem.contentDesc
-                                            }
+                                            },
+
                                         )
                                     }
                                 }
@@ -251,7 +275,10 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     editedImage = uiState.filterSelectedForUSe,
                     shouldSendEditedImageUri = uiState.shouldSendEditedImageUri,
                     isUiState = isUiState,
-                    navigator = navigator
+                    navigator = navigator,
+                    textColor = textColor,
+                    isDarkTheme = isDarkTheme,
+
                 )
             },
             bottomBar = {
@@ -583,7 +610,9 @@ private fun HomeScreen(
     editedImage: Uri?,
     shouldSendEditedImageUri: Boolean,
     isUiState: Boolean,
-    navigator: Navigator
+    navigator: Navigator,
+    textColor: Color,
+    isDarkTheme: Boolean
 
 ) {
     val offset = 20
@@ -628,7 +657,8 @@ private fun HomeScreen(
             isVisible = isVisbile,
             editedImage = editedImage,
             shouldSendEditedImageUri = shouldSendEditedImageUri,
-            isUiState = isUiState
+            isUiState = isUiState,
+            textColor = textColor,
         )
     }
 }
@@ -648,11 +678,15 @@ private fun HomeScreenContent(
     isVisible: Boolean,
     editedImage: Uri?,
     shouldSendEditedImageUri: Boolean,
-    isUiState: Boolean
+    isUiState: Boolean,
+    textColor: Color,
+
+
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
 
         when (targetState) {
+
             //when no image has been imported
             false -> {
                 Column(
@@ -674,6 +708,7 @@ private fun HomeScreenContent(
                         Icon(
                             painterResource(id = R.drawable.icon_add_circle),
                             contentDescription = null,
+                            tint = textColor,
                             modifier = Modifier.size(168.dp)
                         )
                     }
@@ -683,6 +718,7 @@ private fun HomeScreenContent(
                             text = stringResource(id = R.string.tap_anywhere_to_open_a_photo),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
+                            color = textColor
                         )
                     }
                 }

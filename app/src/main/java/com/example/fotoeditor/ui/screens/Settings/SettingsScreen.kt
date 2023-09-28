@@ -3,7 +3,6 @@ package com.example.fotoeditor.ui.screens.Settings
 import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -22,18 +21,22 @@ import com.example.fotoeditor.R
 @Composable
 fun SettingScreen() {
 
-   // var isDarkTheme by remember { mutableStateOf(false) }
-    val isSystemInDarkTheme = isSystemInDarkTheme()
+
+    val themeManager = ThemeManager(LocalContext.current)
+    val selectedOption = remember { mutableStateOf(0) }
      var textColor: Color
-    var isDarkTheme  by remember { mutableStateOf(isSystemInDarkTheme) }
+     var isDialog by remember {
+         mutableStateOf(false)
+     }
+    var isDarkTheme  by remember { mutableStateOf(themeManager.getSelectedTheme() == ThemeManager.THEME_DARK) }
 
 
     val context = LocalContext.current
     AppTheme(
         isDarkTheme = isDarkTheme,
         content = {
-            if (isDarkTheme) textColor = Color.White
-            else textColor = Color.Black
+            textColor = if (isDarkTheme) Color.White
+            else Color.Black
 
         Scaffold(
             topBar = {
@@ -76,6 +79,8 @@ fun SettingScreen() {
                         checked = isDarkTheme,
                         onCheckedChange = { checked ->
                             isDarkTheme = checked
+                            val newTheme = if (checked) ThemeManager.THEME_DARK else ThemeManager.THEME_LIGHT
+                            themeManager.setSelectedTheme(newTheme)
 
                         },
                         colors = SwitchDefaults.colors(
@@ -98,9 +103,7 @@ fun SettingScreen() {
                 )
                 Column(modifier = Modifier
                     .clickable {
-                        Toast
-                            .makeText(context, "hmm", Toast.LENGTH_SHORT)
-                            .show()
+                        isDialog = !isDialog
                     }
                     .padding(bottom = 6.dp)) {
                     Text(
@@ -163,6 +166,12 @@ fun SettingScreen() {
 
         }
     })
+
+    if (isDialog){
+       DialogImageSizing(onDismiss = {isDialog = !isDialog},
+         isDarkTheme, context
+           )
+    }
 }
 
 

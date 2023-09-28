@@ -37,18 +37,18 @@ fun AppTheme (
     )
 
     val CustomColorSchemeDark = Colors(
-        primary = Color.Black,
-        primaryVariant = Color.Black,
-        secondary = Color.Black,
-        secondaryVariant = Color.Black,
-        background = Color.Black,
-        surface = Color.Black,
-        error = Color.Black,
-        onPrimary = Color.Black,
-        onSecondary =Color.Black,
-        onBackground = Color.Black,
-        onSurface = Color.Black,
-        onError = Color.Black,
+        primary = Color.DarkGray,
+        primaryVariant = Color.DarkGray,
+        secondary = Color.DarkGray,
+        secondaryVariant = Color.DarkGray,
+        background = Color.DarkGray,
+        surface = Color.DarkGray,
+        error = Color.DarkGray,
+        onPrimary = Color.DarkGray,
+        onSecondary =Color.DarkGray,
+        onBackground = Color.DarkGray,
+        onSurface = Color.DarkGray,
+        onError = Color.DarkGray,
         isLight = false
     )
 
@@ -59,5 +59,8 @@ fun AppTheme (
         typography = Typography(),
         shapes = Shapes(),
         content = content)
-}}
+}
+
+
+}
 
