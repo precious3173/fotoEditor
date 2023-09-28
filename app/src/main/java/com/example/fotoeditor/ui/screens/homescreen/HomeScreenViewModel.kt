@@ -76,6 +76,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.FilterUnSelected  -> onFilterUnSelected()
             is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.uri, event.bitmap, event.colorFilter)
             is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
+            is HomeScreenEvent.ImageSizingUpdate -> onImageSizingUpdate(event.imageSize)
 
 
         }
@@ -395,6 +396,15 @@ class HomeScreenViewModel @Inject constructor(
             }
         }
     }
+
+
+    private fun onImageSizingUpdate(imageSize: String){
+        _uiState.update {
+            it.copy(
+                imageSizing = imageSize
+            )
+        }
+    }
     private fun getPreviewImage(originalImage: Bitmap?): Bitmap? {
         return kotlin.runCatching {
             val previewWidth = checkNotNull(originalImage?.width)
@@ -442,5 +452,6 @@ sealed interface HomeScreenEvent : Event {
     object FilterUnSelected:  HomeScreenEvent
 
     object SendEditedUri: HomeScreenEvent
+    data class ImageSizingUpdate(val imageSize: String): HomeScreenEvent
 
 }

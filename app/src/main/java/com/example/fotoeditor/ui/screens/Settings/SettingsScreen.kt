@@ -15,13 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.R
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnrememberedMutableState")
 @Composable
-fun SettingScreen() {
+fun SettingScreen(viewModel: HomeScreenViewModel) {
 
-
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeManager = ThemeManager(LocalContext.current)
     val selectedOption = remember { mutableStateOf(0) }
      var textColor: Color
@@ -114,7 +116,7 @@ fun SettingScreen() {
 
                     )
                     Text(
-                        text = "Do not resize",
+                        text = uiState.imageSizing,
                         fontSize = 14.sp,
                         color = textColor
 
@@ -169,7 +171,8 @@ fun SettingScreen() {
 
     if (isDialog){
        DialogImageSizing(onDismiss = {isDialog = !isDialog},
-         isDarkTheme, context
+         isDarkTheme, context,
+           viewModel
            )
     }
 }
@@ -179,7 +182,7 @@ fun SettingScreen() {
 @Composable
 fun SettingsScreenPreview() {
 
-    SettingScreen()
+    //SettingScreen(viewModel)
 
 }
 

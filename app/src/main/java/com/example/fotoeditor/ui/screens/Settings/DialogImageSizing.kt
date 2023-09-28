@@ -3,8 +3,6 @@ package com.example.fotoeditor.ui.screens.Settings
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,9 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Colors
 import androidx.compose.material.LocalContentColor
@@ -35,13 +30,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.absoluteValue
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 
 @Composable
 fun DialogImageSizing(
     onDismiss: () -> Unit,
     isDarkTheme: Boolean,
-    context: Context
+    context: Context,
+    viewModel: HomeScreenViewModel
 ) {
 
 
@@ -124,8 +121,9 @@ fun DialogImageSizing(
                                         RadioButton(
                                             selected = index == selectedOption.value,
                                             onClick = {selectedOption.value = index
-                                                      if (selectedOption.value == 3){
-                                                          Toast.makeText(context, item, Toast.LENGTH_SHORT).show()
+                                                      if (selectedOption.value == index){
+                                                          viewModel.onEvent(HomeScreenEvent.ImageSizingUpdate(item))
+                                                          onDismiss()
                                                       }
                                                       },
                                             colors = RadioButtonDefaults.colors(

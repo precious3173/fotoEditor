@@ -1,6 +1,5 @@
 package com.example.fotoeditor.ui.nav
 
-import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -8,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
@@ -45,7 +43,7 @@ fun NavigationController() {
         }
 
         fotoComposable(Screen.SettingsScreen.route){
-            SettingScreen()
+            SettingScreen(viewModel = homeScreenViewModel)
 
         }
 
