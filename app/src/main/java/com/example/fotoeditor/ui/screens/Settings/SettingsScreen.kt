@@ -1,6 +1,8 @@
 package com.example.fotoeditor.ui.screens.Settings
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,9 +25,27 @@ import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 @Composable
 fun SettingScreen(viewModel: HomeScreenViewModel) {
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  //  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeManager = ThemeManager(LocalContext.current)
-    val selectedOption = remember { mutableStateOf(0) }
+
+       //  val imageSize = uiState.imageSizing
+
+
+    val imageSizeManager = ImageSizeManager(LocalContext.current)
+
+
+        // imageSizeManager.setSelectedImageSize(imageSize)
+
+val selectedImageSize = imageSizeManager.getSelectedImageSize()
+
+    var setImageSize:String? = null
+
+    if (selectedImageSize.isNullOrEmpty()) {
+        setImageSize = "Do not resize"
+    } else {
+        setImageSize = selectedImageSize
+    }
+
      var textColor: Color
      var isDialog by remember {
          mutableStateOf(false)
@@ -116,7 +136,7 @@ fun SettingScreen(viewModel: HomeScreenViewModel) {
 
                     )
                     Text(
-                        text = uiState.imageSizing,
+                        text = setImageSize,
                         fontSize = 14.sp,
                         color = textColor
 

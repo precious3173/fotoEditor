@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,6 +89,11 @@ fun DialogImageSizing(
                 else Color.Black
                 var selectedOption = remember { mutableStateOf(0) }
                 val backgroundColor = if (isDarkTheme) CustomColorSchemeDark else CustomColorScheme
+                val imageSizeManager = ImageSizeManager(LocalContext.current)
+
+
+
+
 
                 val options = listOf(
                     "Do not resize",
@@ -122,7 +128,8 @@ fun DialogImageSizing(
                                             selected = index == selectedOption.value,
                                             onClick = {selectedOption.value = index
                                                       if (selectedOption.value == index){
-                                                          viewModel.onEvent(HomeScreenEvent.ImageSizingUpdate(item))
+                                                          imageSizeManager.setSelectedImageSize(item)
+                                                       //   viewModel.onEvent(HomeScreenEvent.ImageSizingUpdate(item))
                                                           onDismiss()
                                                       }
                                                       },
