@@ -2,14 +2,15 @@ package com.example.fotoeditor.ui.screens.editimagescreen
 
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -27,19 +28,23 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.EditImageBottomBar
+import com.example.fotoeditor.ui.nav.Navigator
+import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
-import kotlinx.coroutines.delay
 
 @Composable
 fun EditImageRoute(
     toolId: String?,
     homeScreenViewModel: HomeScreenViewModel,
-    editImageViewModel: EditImageViewModel
+    editImageViewModel: EditImageViewModel,
+    navigator: Navigator
 ) {
     val TAG = "EditImage"
     val uiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
@@ -52,6 +57,8 @@ fun EditImageRoute(
             editImageViewModel.onEvent(EditImageEvent.UpdateImagePreview(homeScreenUiState.importedImageUri))
         }
     }
+
+
 
     Scaffold(
         topBar = {
@@ -70,27 +77,48 @@ fun EditImageRoute(
                     .background(Color.White)
                     .shadow(elevation = 1.dp)
             ) {
-                EditImageBottomBar(
-                    save = {
-                        IconButton(onClick = { /*TODO*/ }) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = Color.Gray,
-                            )
-                        }
-                    },
-                    abort = {
-                        IconButton(onClick = { /*TODO*/ }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
-                                tint = Color.Gray,
-                            )
-                        }
-                    },
-                    content = {/*todo()*/}
-                )
+
+                        EditImageBottomBar(
+                            save = {
+                                IconButton(onClick = { /*TODO*/ }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.Gray,
+                                    )
+                                }
+                            },
+                            abort = {
+                                IconButton(onClick = {
+                               navigator.navigateTo(Screen.HomeScreen.route)
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = Color.Gray,
+                                    )
+                                }
+                            },
+                            content = {
+                                when(uiState.selectedToolId){
+                                    1 -> {
+                                        IconButton(onClick = { /*TODO*/ }) {
+                                       Icon(painterResource(id =  R.drawable.icon_tune_image)
+                                           , contentDescription = null,
+                                           tint = Color.Gray
+                                       )
+                                        }
+                                         Spacer(modifier = Modifier.width(15.dp))
+                                        IconButton(onClick = { /*TODO*/ }) {
+                                            Icon(painterResource(id =  R.drawable.baseline_auto_fix_normal_24)
+                                                , contentDescription = null,
+                                                tint = Color.Gray)
+                                        }
+                                    }
+                                }
+                            }
+                        )
+
             }
         }
     )

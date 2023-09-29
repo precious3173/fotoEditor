@@ -58,6 +58,7 @@ fun NavigationController() {
                 toolId = it.arguments?.getString("toolId"),
                 homeScreenViewModel = homeScreenViewModel,
                 editImageViewModel = editImageViewModel,
+                navigator = appNavigator
             )
         }
     }
