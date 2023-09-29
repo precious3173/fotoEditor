@@ -313,6 +313,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     .padding(top = 20.dp, bottom = 10.dp)
                                     .clickable {
                                         coroutineScope.launch {
+                                            accessStorage()
                                             viewModel.onEvent(HomeScreenEvent.SendEditedUri)
 
                                         }
@@ -643,7 +644,7 @@ private fun HomeScreenContent(
     isUiState: Boolean,
     textColor: Color,
     shouldExpandTools: Boolean,
-    navigator: Navigator
+     navigator: Navigator
 
 
 ) {
