@@ -26,7 +26,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -278,6 +277,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     navigator = navigator,
                     textColor = textColor,
                     isDarkTheme = isDarkTheme,
+                    shouldExpandTools = uiState.shouldExpandTools,
 
                 )
             },
@@ -389,48 +389,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
             }
         )
 
-        if (uiState.shouldExpandTools) {
-            ToolsBottomSheet(
-                onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleTools) },
-                visible = uiState.shouldExpandTools,
-                content = {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 800.dp)
-                    ) {
-                        LazyVerticalGrid (
-                            columns = GridCells.Fixed(count = 4),
-                            state = rememberLazyGridState(),
-                            contentPadding = PaddingValues(12.dp),
-                        ) {
-                            items(ToolLibrary.tools) {
-                                Box(
-                                    Modifier
-                                        .clip(CircleShape)
-                                        .clickable(
-                                            enabled = true,
-                                            onClick = {
-                                                viewModel.onEvent(HomeScreenEvent.SelectTool(it.id))
-                                                navigator.navigateTo(
-                                                    route = Screen.EditImageScreen.withArgs(
-                                                        "${it.id}"
-                                                    )
-                                                )
-                                            },
-                                            role = Role.Button,
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    ToolItem(it)
-                                }
-                            }
-                        }
-                    }
-                }
-            )
 
-        }
 
         val sheetState = rememberModalBottomSheetState()
         val scope = rememberCoroutineScope()
@@ -612,7 +571,8 @@ private fun HomeScreen(
     isUiState: Boolean,
     navigator: Navigator,
     textColor: Color,
-    isDarkTheme: Boolean
+    isDarkTheme: Boolean,
+    shouldExpandTools: Boolean
 
 ) {
     val offset = 20
@@ -659,6 +619,8 @@ private fun HomeScreen(
             shouldSendEditedImageUri = shouldSendEditedImageUri,
             isUiState = isUiState,
             textColor = textColor,
+            shouldExpandTools = shouldExpandTools,
+            navigator = navigator
         )
     }
 }
@@ -680,6 +642,8 @@ private fun HomeScreenContent(
     shouldSendEditedImageUri: Boolean,
     isUiState: Boolean,
     textColor: Color,
+    shouldExpandTools: Boolean,
+    navigator: Navigator
 
 
 ) {
@@ -971,6 +935,48 @@ private fun HomeScreenContent(
                 }
             }
         }
+    }
+    if (shouldExpandTools) {
+        ToolsBottomSheet(
+            onDismissRequest = { onEvent(HomeScreenEvent.ToggleTools) },
+            visible = shouldExpandTools,
+            content = {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                ) {
+                    LazyVerticalGrid (
+                        columns = GridCells.Fixed(count = 4),
+                        state = rememberLazyGridState(),
+                        contentPadding = PaddingValues(12.dp),
+                    ) {
+                        items(ToolLibrary.tools) {
+                            Box(
+                                Modifier
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        enabled = true,
+                                        onClick = {
+                                            onEvent(HomeScreenEvent.SelectTool(it.id))
+                                            navigator.navigateTo(
+                                                route = Screen.EditImageScreen.withArgs(
+                                                    "${it.id}"
+                                                )
+                                            )
+                                        },
+                                        role = Role.Button,
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                ToolItem(it)
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
     }
 
 }

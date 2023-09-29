@@ -296,6 +296,7 @@ class HomeScreenViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     shouldExpandTools = false,
+                    shouldExpandExport = false,
                     shouldExpandLooks = !uiState.value.shouldExpandLooks,
                 )
             }
@@ -307,6 +308,7 @@ class HomeScreenViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     shouldExpandLooks = false,
+                    shouldExpandExport = false,
                     shouldExpandTools = !_uiState.value.shouldExpandTools,
                     selectedToolId = -1,
                 )
@@ -349,6 +351,7 @@ class HomeScreenViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     shouldExpandLooks = false,
+                    shouldExpandTools = false,
                     shouldExpandExport = !uiState.value.shouldExpandExport,
                 )
             }
