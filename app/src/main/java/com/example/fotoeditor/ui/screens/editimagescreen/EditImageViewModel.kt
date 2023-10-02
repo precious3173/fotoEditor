@@ -2,8 +2,8 @@ package com.example.fotoeditor.ui.screens.editimagescreen
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.ColorMatrix
 import android.net.Uri
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.lifecycle.ViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler

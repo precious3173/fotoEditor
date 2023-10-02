@@ -28,6 +28,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +41,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.fotoeditor.ui.screens.Settings.ColorMatrixTuneImage.ColorMatrice.createColorMatrix
+import com.example.fotoeditor.ui.screens.Settings.ColorMatrixTuneImage.colorMatrix.createColorMatrix
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageEvent
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
 import com.example.fotoeditor.ui.screens.editimagescreen.ImageAdjustments
@@ -59,8 +60,8 @@ fun TuneImageDialog(
     var offsetY by remember { mutableStateOf(0f) }
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val screenHeight = 500.dp
-    val cardHeight = 400.dp
+    val screenHeight = 400.dp
+    val cardHeight = 300.dp
     val cardWidth = 300.dp
     val cardBackgroundAlpha = 0.7f // Adjust transparency as needed
 
@@ -84,16 +85,6 @@ fun TuneImageDialog(
     var shadows by remember { mutableStateOf(0.0f) }
     var warmth by remember { mutableStateOf(0.0f) }
 
-    val colorMatrix = remember(brightness, contrast, ambiance, highlights, shadows, warmth) {
-        createColorMatrix(
-            brightness = brightness,
-            contrast = contrast,
-            ambiance = ambiance,
-            highlights = highlights,
-            shadows = shadows,
-            warmth = warmth
-        )
-    }
 
 
 
@@ -102,6 +93,9 @@ fun TuneImageDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.5f))
+                .clickable {
+                    onDismiss()
+                }
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                         if (offset.x < 0 || offset.x > 1 || offset.y < 0 || offset.y > 1) {
@@ -114,7 +108,7 @@ fun TuneImageDialog(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ){
             Card(
                 modifier = cardModifier,
@@ -134,7 +128,7 @@ fun TuneImageDialog(
                     SliderValue(
                         label = "Brightness",
                         value = brightness,
-                        onValueChange = { newValue -> brightness = newValue }
+                        onValueChange = { newValue -> brightness = newValue },
                     )
 
                     SliderValue(
@@ -169,41 +163,35 @@ fun TuneImageDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(
-                        onClick = {
-                            val adjustments = ImageAdjustments(
-                                brightness = brightness,
-                                contrast = contrast,
-                                ambiance = ambiance,
-                                highlights = highlights,
-                                shadows = shadows,
-                                warmth = warmth
-                            )
-                            onAdjustmentsChanged(adjustments)
-                            onDismiss()
-                        }
-                    ) {
-
-                        Text(
-                            text = "Apply Changes",
-                            modifier = Modifier.clickable {
-                                if (colorMatrix == null){
-                                    Toast.makeText(context, "It is null", Toast.LENGTH_SHORT).show()
-                                    onDismiss()
-                                }
-                                else{
-                                    onEvent(EditImageEvent.UpdateColor(colorMatrix))
-                                    onDismiss()
-                                }
-
-                            })
                     }
                 }
             }
         }
         }
+        LaunchedEffect(brightness, contrast, ambiance, highlights, shadows, warmth) {
+            val adjustments = ImageAdjustments(
+                brightness = brightness,
+                contrast = contrast,
+                ambiance = ambiance,
+                highlights = highlights,
+                shadows = shadows,
+                warmth = warmth
+            )
+            val colorMatrix = createColorMatrix(
+                brightness = brightness,
+                contrast = contrast,
+                ambiance = ambiance,
+                highlights = highlights,
+                shadows = shadows,
+                warmth = warmth
+            )
+            onAdjustmentsChanged(adjustments)
+            if (colorMatrix != null) {
+                onEvent(EditImageEvent.UpdateColor(colorMatrix))
+            }
     }
 }
+
 
 @Composable
 fun SliderValue(
@@ -229,16 +217,16 @@ fun SliderValue(
     }
 }
 
-fun loadBitmapFromUri(contentResolver: ContentResolver, uri: Uri): ImageBitmap? {
-    var inputStream: InputStream? = null
-    return try {
-        inputStream = contentResolver.openInputStream(uri)
-        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-    } catch (e: Exception) {
-        // Handle any exceptions here
-        null
-    } finally {
-        inputStream?.close()
-    }
-}
+//fun loadBitmapFromUri(contentResolver: ContentResolver, uri: Uri): ImageBitmap? {
+//    var inputStream: InputStream? = null
+//    return try {
+//        inputStream = contentResolver.openInputStream(uri)
+//        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+//    } catch (e: Exception) {
+//        // Handle any exceptions here
+//        null
+//    } finally {
+//        inputStream?.close()
+//    }
+//}
 

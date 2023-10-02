@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -39,7 +40,6 @@ import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
-import kotlin.reflect.KFunction1
 
 @Composable
 fun EditImageRoute(
@@ -71,9 +71,10 @@ fun EditImageRoute(
                 imageUri = uiState.imagePreview,
                 modifier = Modifier.padding(it),
                 onEvent = editImageViewModel::onEvent,
-                isTuneDialogVisible = uiState.isTuneDialogVisible
+                isTuneDialogVisible = uiState.isTuneDialogVisible,
+                uiState = uiState
 
-            )
+                )
         },
         bottomBar = {
             Box(
@@ -121,7 +122,9 @@ fun EditImageRoute(
     if (uiState.isTuneDialogVisible){
    TuneImageDialog(
        visible = uiState.isTuneDialogVisible,
-       onDismiss = {!uiState.isTuneDialogVisible},
+       onDismiss = {
+           uiState.isTuneDialogVisible = false
+       },
        onAdjustmentsChanged = { adjustments ->
            // Handle adjustments here
            println("Adjustments: $adjustments")
@@ -163,6 +166,7 @@ private fun EditImageScreen(
     modifier: Modifier = Modifier,
     onEvent: (Event) -> Unit,
     isTuneDialogVisible: Boolean,
+    uiState: EditImageUiState,
 ) {
     val TAG = "EditImage"
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -170,6 +174,7 @@ private fun EditImageScreen(
             EditImageContent(
                 modifier = modifier,
                 bitmap = it.toBitmap(LocalContext.current),
+                uiState = uiState
             )
         }
 
@@ -191,20 +196,48 @@ private fun EditImageScreen(
 private fun EditImageContent(
     bitmap: Bitmap?,
     modifier: Modifier = Modifier,
+    uiState: EditImageUiState
 ) {
+     if (uiState.editColorMatrix != null){
+
+         bitmap?.let {
+             Box(
+                 Modifier
+                     .fillMaxSize()
+                     .then(modifier)
+             ) {
+
+                 Image(
+                     bitmap = it.asImageBitmap(),
+                     contentDescription = null,
+                     modifier = Modifier
+                         .fillMaxSize(),
+                     contentScale = ContentScale.Fit,
+                     colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix!!)
+                 )
+
+             }
+
+         }
+     }
+    else{
     bitmap?.let {
         Box(
             Modifier
                 .fillMaxSize()
                 .then(modifier)
         ) {
-            Image(
-                bitmap = it.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentScale = ContentScale.Fit,
-            )
-        }
+
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+
+            }
+
+    }
     }
 }
