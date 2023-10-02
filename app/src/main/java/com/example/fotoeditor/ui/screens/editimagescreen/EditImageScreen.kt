@@ -33,11 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.EditImageBottomBar
+import com.example.fotoeditor.ui.components.TuneImageDialog
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
+import kotlin.reflect.KFunction1
 
 @Composable
 fun EditImageRoute(
@@ -69,6 +71,8 @@ fun EditImageRoute(
                 imageUri = uiState.imagePreview,
                 modifier = Modifier.padding(it),
                 onEvent = editImageViewModel::onEvent,
+                isTuneDialogVisible = uiState.isTuneDialogVisible
+
             )
         },
         bottomBar = {
@@ -100,28 +104,57 @@ fun EditImageRoute(
                                 }
                             },
                             content = {
-                                when(uiState.selectedToolId){
-                                    1 -> {
-                                        IconButton(onClick = { /*TODO*/ }) {
-                                       Icon(painterResource(id =  R.drawable.icon_tune_image)
-                                           , contentDescription = null,
-                                           tint = Color.Gray
-                                       )
-                                        }
-                                         Spacer(modifier = Modifier.width(15.dp))
-                                        IconButton(onClick = { /*TODO*/ }) {
-                                            Icon(painterResource(id =  R.drawable.baseline_auto_fix_normal_24)
-                                                , contentDescription = null,
-                                                tint = Color.Gray)
-                                        }
-                                    }
-                                }
+                                EditImageMode(
+                                    selectToolId = uiState.selectedToolId,
+                                    onEvent = editImageViewModel::onEvent,
+                                    )
+
+
                             }
                         )
 
             }
         }
     )
+
+
+    if (uiState.isTuneDialogVisible){
+   TuneImageDialog(
+       visible = uiState.isTuneDialogVisible,
+       onDismiss = {!uiState.isTuneDialogVisible},
+       onAdjustmentsChanged = { adjustments ->
+           // Handle adjustments here
+           println("Adjustments: $adjustments")
+       },
+       onEvent = editImageViewModel::onEvent,
+
+   )
+    }
+}
+
+@Composable
+fun EditImageMode(
+    selectToolId: Int,
+    onEvent: (Event) -> Unit,
+) {
+    when(selectToolId){
+        1 -> {
+            IconButton(onClick = {
+             onEvent(EditImageEvent.UpdateTune)
+            }) {
+                Icon(painterResource(id =  R.drawable.icon_tune_image)
+                    , contentDescription = null,
+                    tint = Color.Gray
+                )
+            }
+            Spacer(modifier = Modifier.width(15.dp))
+            IconButton(onClick = { /*TODO*/ }) {
+                Icon(painterResource(id =  R.drawable.baseline_auto_fix_normal_24)
+                    , contentDescription = null,
+                    tint = Color.Gray)
+            }
+        }
+    }
 }
 
 @Composable
@@ -129,6 +162,7 @@ private fun EditImageScreen(
     imageUri: Uri?,
     modifier: Modifier = Modifier,
     onEvent: (Event) -> Unit,
+    isTuneDialogVisible: Boolean,
 ) {
     val TAG = "EditImage"
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

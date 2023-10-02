@@ -960,6 +960,7 @@ private fun HomeScreenContent(
                                         enabled = true,
                                         onClick = {
                                             onEvent(HomeScreenEvent.SelectTool(it.id))
+                                            onEvent(HomeScreenEvent.ToggleTools)
                                             navigator.navigateTo(
                                                 route = Screen.EditImageScreen.withArgs(
                                                     "${it.id}"

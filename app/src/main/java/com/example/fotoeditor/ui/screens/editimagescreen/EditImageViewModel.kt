@@ -2,6 +2,7 @@ package com.example.fotoeditor.ui.screens.editimagescreen
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ColorMatrix
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.example.fotoeditor.ui.utils.Event
@@ -26,6 +27,8 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateToolId -> onUpdateToolId(event.id)
             is EditImageEvent.UpdateImagePreview -> onUpdateImagePreview(event.uri)
             is EditImageEvent.UpdateProgress -> onUpdateProgress(event.progress)
+            is EditImageEvent.UpdateTune -> onUpdateTune()
+            is EditImageEvent.UpdateColor -> onUpdateColor(event.colorMatrix)
         }
     }
 
@@ -40,11 +43,27 @@ class EditImageViewModel @Inject constructor(
     private fun onUpdateProgress(progress: Float) {
         _uiState.update { it.copy(progress = progress) }
     }
+
+    private fun onUpdateTune() {
+        _uiState.update { it.copy(
+            isTuneDialogVisible = true
+        ) }
+    }
+
+    private fun onUpdateColor(colorMatrix: ColorMatrix){
+     _uiState.update {
+         it.copy(
+             editColorMatrix = colorMatrix
+         )
+     }
+    }
 }
 
 sealed interface EditImageEvent : Event {
     data class UpdateToolId(val id: Int) : EditImageEvent
     data class UpdateImagePreview(val uri: Uri?) : EditImageEvent
     data class UpdateProgress(val progress: Float) : EditImageEvent
+    object UpdateTune: EditImageEvent
+    data class UpdateColor(val colorMatrix: ColorMatrix): EditImageEvent
 
 }
