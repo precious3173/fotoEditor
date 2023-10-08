@@ -22,6 +22,7 @@ import com.example.fotoeditor.ui.utils.Tool
 @Composable
 fun ToolItem(
     tool: Tool,
+    textColor: Color
 ) {
     Column(
         verticalArrangement = Arrangement.SpaceAround,
@@ -31,13 +32,13 @@ fun ToolItem(
         Icon(
             painterResource(id = tool.icon),
             contentDescription = null,
-            tint = Color.Gray,
+            tint = textColor,
             modifier = Modifier.padding(4.dp),
         )
         Text(
             text = tool.name,
             style = MaterialTheme.typography.labelSmall.copy(
-                color = Color.Gray,
+                color = textColor,
             ),
             textAlign = TextAlign.Center,
         )
@@ -52,6 +53,7 @@ private fun ToolItemPreview() {
             id = 1,
             name = "tool",
             icon = R.drawable.icon_noir,
-        )
+        ),
+        Color.Gray
     )
 }

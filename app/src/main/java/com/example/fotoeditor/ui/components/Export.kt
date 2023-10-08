@@ -28,6 +28,7 @@ import com.example.fotoeditor.ui.utils.Exports
 @Composable
 fun ExportItem(
     exports: Exports,
+    textColor: Color
 ) {
     Row(
       modifier = Modifier
@@ -38,7 +39,7 @@ fun ExportItem(
         Icon(
             painterResource(id = exports.icon),
             contentDescription = null,
-            tint = Color.Gray,
+            tint = textColor,
             modifier = Modifier.padding(10.dp),
         )
         Column (modifier = Modifier.fillMaxWidth()
@@ -46,7 +47,7 @@ fun ExportItem(
             Text(
                 text = exports.title,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    color = Color.Black,
+                    color = textColor,
                     fontSize = 16.sp,
 
                 ),
@@ -55,7 +56,7 @@ fun ExportItem(
             Text(
                 text = exports.description,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    color = Color.Gray,
+                    color = textColor,
                     fontSize = 12.sp,
                 ),
                 textAlign = TextAlign.Start,
@@ -74,6 +75,7 @@ private fun ExportItemPreview() {
             title = "tool",
             description = "helllo",
             icon = R.drawable.icon_noir,
-        )
+        ),
+        Color.Gray
     )
 }

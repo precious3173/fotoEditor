@@ -278,6 +278,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     textColor = textColor,
                     isDarkTheme = isDarkTheme,
                     shouldExpandTools = uiState.shouldExpandTools,
+                    backgroundColor = backgroundColor
 
                 )
             },
@@ -290,6 +291,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             Icon(
                                 painterResource(id = R.drawable.cross_23),
                                 contentDescription = null,
+                                tint = textColor,
                                 modifier = Modifier
                                     .wrapContentSize()
                                     .padding(top = 20.dp, bottom = 10.dp)
@@ -308,6 +310,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                             Icon(
                                 painterResource(id = R.drawable.check),
                                 contentDescription = null,
+                                tint = textColor,
                                 modifier = Modifier
                                     .wrapContentSize()
                                     .padding(top = 20.dp, bottom = 10.dp)
@@ -401,6 +404,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
             val context = LocalContext.current
             val snackDuration by remember { mutableStateOf(4000L)}
                 ExportBottomSheet(
+                    background = backgroundColor,
                 onDismissRequest = { viewModel.onEvent(HomeScreenEvent.ToggleExport) },
                 visible = uiState.shouldExpandExport,
                 sheetState = sheetState,
@@ -409,6 +413,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                         Modifier
                             .fillMaxWidth()
                             .heightIn(max = 800.dp)
+
                     ) {
                         LazyVerticalGrid (
                             columns = GridCells.Fixed(count = 1),
@@ -503,7 +508,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                             }
                                         )
                                 ) {
-                                    ExportItem(exports = it)
+                                    ExportItem(exports = it, textColor)
                                 }
                             }
                         }
@@ -573,7 +578,8 @@ private fun HomeScreen(
     navigator: Navigator,
     textColor: Color,
     isDarkTheme: Boolean,
-    shouldExpandTools: Boolean
+    shouldExpandTools: Boolean,
+    backgroundColor: Color
 
 ) {
     val offset = 20
@@ -621,7 +627,8 @@ private fun HomeScreen(
             isUiState = isUiState,
             textColor = textColor,
             shouldExpandTools = shouldExpandTools,
-            navigator = navigator
+            navigator = navigator,
+            backgroundColor = backgroundColor
         )
     }
 }
@@ -644,7 +651,8 @@ private fun HomeScreenContent(
     isUiState: Boolean,
     textColor: Color,
     shouldExpandTools: Boolean,
-     navigator: Navigator
+     navigator: Navigator,
+    backgroundColor: Color
 
 
 ) {
@@ -920,7 +928,8 @@ private fun HomeScreenContent(
                                             }
                                             Text(
                                                 text = filterName,
-                                                style = MaterialTheme.typography.labelSmall
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = textColor
                                             )
 
                                         }
@@ -939,6 +948,7 @@ private fun HomeScreenContent(
     }
     if (shouldExpandTools) {
         ToolsBottomSheet(
+            background = backgroundColor,
             onDismissRequest = { onEvent(HomeScreenEvent.ToggleTools) },
             visible = shouldExpandTools,
             content = {
@@ -971,7 +981,7 @@ private fun HomeScreenContent(
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                ToolItem(it)
+                                ToolItem(it, textColor)
                             }
                         }
                     }

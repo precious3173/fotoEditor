@@ -82,6 +82,7 @@ fun LooksBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolsBottomSheet(
+    background: Color,
     onDismissRequest: () -> Unit,
     visible: Boolean,
     content: @Composable () -> Unit,
@@ -108,11 +109,12 @@ fun ToolsBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
+
             ) {
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(Color.White), contentAlignment = Alignment.BottomCenter) {
+                        .background(background), contentAlignment = Alignment.BottomCenter) {
                     content()
                 }
             }
@@ -122,6 +124,7 @@ fun ToolsBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ExportBottomSheet(
+    background: Color,
     onDismissRequest: () -> Unit,
     visible: Boolean,
     sheetState: SheetState,
@@ -154,7 +157,7 @@ fun ExportBottomSheet(
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(Color.White), contentAlignment = Alignment.BottomCenter) {
+                        .background(background), contentAlignment = Alignment.BottomCenter) {
                     content()
                 }
             }
