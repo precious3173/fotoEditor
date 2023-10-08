@@ -25,5 +25,9 @@ data class HomeUiState(
     var filterSelected: Boolean = false,
     var filterSelectedForUSe: Uri? = null,
     var shouldSendEditedImageUri: Boolean = false,
-    var imageSizing: String = ""
+    var imageSizing: String = "",
+    var saveUri: Boolean = false,
+    var savedImageBitmap: Bitmap? = null,
+    var savedColorArray: FloatArray? = FloatArray(0),
+    var savedImageUri: Uri? = null
 )

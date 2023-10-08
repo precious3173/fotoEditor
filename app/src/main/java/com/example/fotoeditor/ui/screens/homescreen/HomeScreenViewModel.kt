@@ -64,7 +64,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.HideExportMenu -> onHideExportMenu()
             is HomeScreenEvent.OpenOptionsMenu -> onOpenOptionsMenu()
             is HomeScreenEvent.HideOptionsMenu -> onHideOptionsMenu()
-            is HomeScreenEvent.UpdateFilter -> updateFilter(event.index)
+            is HomeScreenEvent.UpdateFilter -> updateFilter(event.bitmap, event.colorFilterArray, event.uri)
             is HomeScreenEvent.SelectTool -> onSelectTool(event.id)
             is HomeScreenEvent.UpdateFilterOnImage -> updateFilterOnImage(event.bitmap)
             is HomeScreenEvent.LoadImageFilters -> onLoadImageFilters(event.imageBitmap)
@@ -77,6 +77,8 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.uri, event.bitmap, event.colorFilter)
             is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
             is HomeScreenEvent.ImageSizingUpdate -> onImageSizingUpdate(event.imageSize)
+            is HomeScreenEvent.SaveImage -> onUpdateSaveImage()
+            is HomeScreenEvent.UpdateFilterIndex -> updateFilterIndex(event.index)
 
 
         }
@@ -136,7 +138,7 @@ class HomeScreenViewModel @Inject constructor(
 
     @SuppressLint("SuspiciousIndentation", "Recycle")
     private fun onFilterSelectedForUSe (uriImport: Uri?, bitmap: Bitmap?, colorFilterArray: FloatArray) {
-        if (_uiState.value.shouldSendEditedImageUri) {
+    if (_uiState.value.saveUri)  {
 
             val filteredBitmap = bitmap!!.copy(Bitmap.Config.ARGB_8888, true)
             val canvas = android.graphics.Canvas(filteredBitmap)
@@ -196,11 +198,10 @@ class HomeScreenViewModel @Inject constructor(
               }
 
                     _uiState.update { it.copy(filterSelectedForUSe = uri) }
-                    _uiState.update {
-                        it.copy(filterSelected = false)
-                    }
+
                     Toast.makeText(context, "uri is not empty", Toast.LENGTH_SHORT).show()
-                } else {
+                }
+                else {
                     _uiState.update { it.copy(filterSelectedForUSe = uriImport) }
                     Toast.makeText(context, "uri is empty", Toast.LENGTH_SHORT).show()
                 }
@@ -210,7 +211,7 @@ class HomeScreenViewModel @Inject constructor(
                 Toast.makeText(context, "Error saving the image.", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
             }
-        }
+       }
     }
 
 
@@ -261,15 +262,27 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private fun updateFilter(index: Int) {
+    private fun updateFilter( bitmap: Bitmap?, colorFilterArray: FloatArray, uri: Uri?) {
 
              _uiState.update {
                  it.copy(
-                     selectedFilter = index,
+                     savedImageBitmap = bitmap,
+                     savedImageUri = uri,
+                     savedColorArray = colorFilterArray
                  )
              }
 
     }
+    private fun updateFilterIndex(index: Int) {
+
+        _uiState.update {
+            it.copy(
+                selectedFilter = index,
+            )
+        }
+
+    }
+
 
     private fun onOpenOptionsMenu() {
         _uiState.update { it.copy(shouldShowOptionsMenu = true) }
@@ -384,20 +397,29 @@ class HomeScreenViewModel @Inject constructor(
     private fun  onSendEditedUri(){
         _uiState.update {
             it.copy(
-                shouldSendEditedImageUri = true
+                shouldSendEditedImageUri = true,
+                filterSelected = false
+
 
             )
         }
-        CoroutineScope(Dispatchers.IO).launch {
+    }
 
-            delay(1000L)
-            _uiState.update {
-                it.copy(
-                    shouldSendEditedImageUri = false
-
-                )
-            }
+    private fun onUpdateSaveImage(){
+        _uiState.update {
+            it.copy(
+                saveUri = true
+            )
         }
+//        CoroutineScope(Dispatchers.IO).launch {
+//
+//            delay(9000L)
+//            _uiState.update {
+//                it.copy(
+//                    saveUri = false
+//                )
+//            }
+//        }
     }
 
 
@@ -417,6 +439,7 @@ class HomeScreenViewModel @Inject constructor(
             }
         }.getOrDefault(originalImage)
     }
+
 }
 
 
@@ -443,7 +466,7 @@ sealed interface HomeScreenEvent : Event {
     object OnOpenDialog : HomeScreenEvent
 
     object  OnCloseDialog : HomeScreenEvent
-    data class UpdateFilter(val index: Int) : HomeScreenEvent
+    data class UpdateFilter( val bitmap: Bitmap?, val uri: Uri?, val colorFilterArray: FloatArray) : HomeScreenEvent
     data class SelectTool(val id: Int) : HomeScreenEvent
     data class UpdateFilterOnImage(val bitmap: Bitmap?) : HomeScreenEvent
     data class LoadImageFilters(val imageBitmap: Bitmap?) : HomeScreenEvent
@@ -456,5 +479,8 @@ sealed interface HomeScreenEvent : Event {
 
     object SendEditedUri: HomeScreenEvent
     data class ImageSizingUpdate(val imageSize: String): HomeScreenEvent
+
+    object SaveImage: HomeScreenEvent
+    data class UpdateFilterIndex(val index: Int): HomeScreenEvent
 
 }
