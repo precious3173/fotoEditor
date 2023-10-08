@@ -10,6 +10,8 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -40,7 +42,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -101,13 +102,13 @@ import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.ExportImage.SaveImage
 import com.example.fotoeditor.ui.screens.Settings.ThemeManager
+import com.example.fotoeditor.ui.utils.CheckIcons
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -278,8 +279,11 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     textColor = textColor,
                     isDarkTheme = isDarkTheme,
                     shouldExpandTools = uiState.shouldExpandTools,
+                    isImageChecked = uiState.imageLookChecked,
+                    getFilteredBitmap = uiState.getImageBitmap,
+                    uiState =uiState
 
-                )
+                    )
             },
             bottomBar = {
                 val coroutineScope = rememberCoroutineScope()
@@ -287,38 +291,15 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 AnimatedVisibility(visible = uiState.hasPhotoImported) {
                     BottomBar {
                         if (uiState.filterSelected){
-                            Icon(
-                                painterResource(id = R.drawable.cross_23),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .wrapContentSize()
-                                    .padding(top = 20.dp, bottom = 10.dp)
-                                    .clickable {
-                                        viewModel.onEvent(HomeScreenEvent.FilterUnSelected)
-
-                                        viewModel.onEvent(
-                                            HomeScreenEvent.UpdateFilter(
-                                                0
-                                            )
-                                        )
-
-                                    }
-                            )
-
-                            Icon(
-                                painterResource(id = R.drawable.check),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .wrapContentSize()
-                                    .padding(top = 20.dp, bottom = 10.dp)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            accessStorage()
-                                            viewModel.onEvent(HomeScreenEvent.SendEditedUri)
-
-                                        }
-
-                                    }
+                            CheckIcons(
+                                onEvent = viewModel::onEvent,
+                                coroutineScope = coroutineScope,
+                                accessStorage = accessStorage,
+                                uiState = uiState,
+                                imageLookManager = ImageLookManager(context),
+                                context = context,
+                                bitmap = uiState.getImageBitmap,
+                                floatArray = uiState.colorFilterArray
                             )
                         }
                         else{
@@ -389,6 +370,13 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                 }
             }
         )
+        if (uiState.imageLookChecked){
+            var appliedFilters by remember { mutableStateOf(emptyList<FloatArray>()) }
+
+
+            applyColorFilter(context, uiState.importedImageUri, uiState.colorFilterArray, uiState.colorFilterArray, viewModel)
+
+        }
 
 
 
@@ -539,6 +527,65 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
         }
     }
+@Composable
+fun applyColorFilter(context: Context, imageUri: Uri?, existingColorFilterArray: FloatArray, newColorFilterArray: FloatArray, viewModel: HomeScreenViewModel) {
+
+    val context = LocalContext.current
+    val cacheDir = context.cacheDir
+
+    // Load the original bitmap from the imageUri
+    val originalBitmap = remember(imageUri) {
+        try {
+            BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    val combinedColorFilterArray = remember(existingColorFilterArray, newColorFilterArray) {
+        combineColorFilters(existingColorFilterArray, newColorFilterArray)
+    }
+
+    val filteredImageBitmap = remember(originalBitmap, combinedColorFilterArray) {
+        originalBitmap?.let { applyColorFilterToBitmap(it, combinedColorFilterArray) }
+    }
+ if (filteredImageBitmap != null ) viewModel.onEvent(HomeScreenEvent.FilteredUri(filteredImageBitmap))
+
+}
+
+
+fun combineColorFilters(existingColorFilterArray: FloatArray, newColorFilterArray: FloatArray): FloatArray {
+    if (existingColorFilterArray.size != newColorFilterArray.size) {
+        throw IllegalArgumentException("Both color filter arrays must have the same size.")
+    }
+
+    var combinedColorFilterArray = FloatArray(existingColorFilterArray.size)
+
+    if (existingColorFilterArray == newColorFilterArray){
+        combinedColorFilterArray = newColorFilterArray
+    } else{
+        for (i in existingColorFilterArray.indices) {
+            combinedColorFilterArray[i] = existingColorFilterArray[i] + newColorFilterArray[i]
+        }
+    }
+
+
+    return combinedColorFilterArray
+}
+fun applyColorFilterToBitmap(bitmap: Bitmap, colorFilterArray: FloatArray): Bitmap {
+    val filteredBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+    val canvas = Canvas(filteredBitmap)
+    val paint = android.graphics.Paint().apply {
+        val colorMatrix = android.graphics.ColorMatrix(colorFilterArray)
+        colorFilter = android.graphics.ColorMatrixColorFilter(colorMatrix)
+    }
+
+    canvas.drawBitmap(filteredBitmap, 0f, 0f, paint)
+
+    return filteredBitmap
+}
+
 
 
 
@@ -573,7 +620,10 @@ private fun HomeScreen(
     navigator: Navigator,
     textColor: Color,
     isDarkTheme: Boolean,
-    shouldExpandTools: Boolean
+    shouldExpandTools: Boolean,
+    isImageChecked: Boolean,
+    getFilteredBitmap: Bitmap?,
+    uiState: HomeUiState
 
 ) {
     val offset = 20
@@ -621,7 +671,10 @@ private fun HomeScreen(
             isUiState = isUiState,
             textColor = textColor,
             shouldExpandTools = shouldExpandTools,
-            navigator = navigator
+            navigator = navigator,
+            isImageChecked = isImageChecked,
+            uiState = uiState
+
         )
     }
 }
@@ -644,11 +697,52 @@ private fun HomeScreenContent(
     isUiState: Boolean,
     textColor: Color,
     shouldExpandTools: Boolean,
-     navigator: Navigator
+    navigator: Navigator,
+    isImageChecked: Boolean,
+    uiState: HomeUiState
 
 
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
+
+
+        val context = LocalContext.current
+        val imageLookManager = ImageLookManager(context)
+        var selectedColorFilter: ColorFilter?  = null
+        var imageUri: Bitmap? = null
+        var imageUrr: Bitmap? = null
+        if (importedImageUri != null){
+           imageUrr  =  uiState.getImageBitmap
+            selectedColorFilter = null
+        }
+
+        try {
+            if (uiState.getImageBitmap  == null){
+
+                imageUri = importedImageUri!!.toBitmap(context)
+                selectedColorFilter = uiState.colorFilter
+            }
+             else{
+                if (uiState.imageLookChecked) {
+
+
+                    imageUri = imageUrr
+
+                    selectedColorFilter = null
+                } else {
+                    selectedColorFilter = uiState.colorFilter
+
+                    imageUri = imageUrr
+                }
+             }
+
+
+
+        } catch (e: Exception){
+            e.stackTrace
+        }
+
+//        if (imageUri != null)   painter= rememberImagePainter(imageUri)
 
         when (targetState) {
 
@@ -691,7 +785,6 @@ private fun HomeScreenContent(
 
             //with image imported
             true -> {
-                val context = LocalContext.current
 
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
 
@@ -702,20 +795,20 @@ private fun HomeScreenContent(
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         //the preview
-                        importedImageUri?.let {
+
 
                             AsyncImage(
-                                model = it,
+                                model = imageUri,
                                 contentDescription = null,
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .animateContentSize()
                                     .weight(1f),
-                                colorFilter = ColorFilter.colorMatrix(
-                                    ColorMatrix(SelectFilter(selectedFilter!!))
-                                )
+                              colorFilter = selectedColorFilter
                             )
-                        }
+
+
+
                         //isVisible
                    if (isVisible){
 
@@ -757,8 +850,7 @@ private fun HomeScreenContent(
 
 
                         AnimatedVisibility(visible = shouldExpandLooks) {
-                            var coroutineScope = rememberCoroutineScope()
-                            var sharedUri by remember { mutableStateOf<Uri?>(null) }
+
                             LooksBottomSheet {
 //                                imageFilters.map { filter ->
 //                                    Box(
@@ -845,11 +937,26 @@ private fun HomeScreenContent(
                                         else -> ""
                                     }
 
+//                                    val isSelected = index == selectedFilter
+//                                    val toolColor by animateColorAsState(
+//                                        targetValue = if (isSelected) Color.Blue.copy(0.4f) else Color.Transparent,
+//                                        label = "ToolColor"
+//                                    )
                                     Box(
                                         Modifier.padding(4.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
 
+                                       val bitmap = importedImageUri?.toBitmap(LocalContext.current)
+                                        val colorMatrix = ColorMatrix(
+                                            SelectFilter(index)
+                                        )
+
+                                        val colorFilter = ColorFilter.colorMatrix(
+                                            colorMatrix
+                                        )
+
+                                        val floatArray = SelectFilter(index = index)
                                         val toolColor by animateColorAsState(
                                             targetValue = if (index == selectedFilter) Color.Blue.copy(
                                                 0.4f
@@ -870,31 +977,29 @@ private fun HomeScreenContent(
                                                 .selectable(
                                                     selected = true,
                                                     onClick = {
-                                                        coroutineScope.launch(Dispatchers.IO) {
-                                                            onEvent(
-                                                                HomeScreenEvent.UpdateFilter(
-                                                                    index
-                                                                )
 
+                                                        onEvent(
+                                                            HomeScreenEvent.imageDetails(
+                                                                bitmap = bitmap,
+                                                                colorFilter = colorFilter,
+                                                                colorFilterArray = floatArray
                                                             )
-                                                            onEvent(HomeScreenEvent.FilterSelected)
-                                                        }
+                                                        )
+//                                                        onEvent(
+//                                                            HomeScreenEvent.UpdateFilter(
+//                                                                index
+//                                                            )
+
+//                                                        )
+                                                        onEvent(HomeScreenEvent.FilterSelected)
 
 
                                                     }
                                                 ), contentAlignment = Alignment.Center) {
-                                                var bitmap: Bitmap? = null
-                                                importedImageUri?.let {
-                                                    bitmap = it.toBitmap(LocalContext.current)
-                                                    val colorMatrix =     ColorMatrix(
-                                                        SelectFilter(index)
-                                                    )
-                                                    val colorFilter = ColorFilter.colorMatrix(
-                                                        colorMatrix
-                                                    )
-                                                    bitmap?.let { image ->
+                                                bitmap?.let {
+
                                                         Image(
-                                                            bitmap = image.asImageBitmap(),
+                                                            bitmap = bitmap.asImageBitmap(),
                                                             contentDescription = null,
                                                             contentScale = ContentScale.Crop,
                                                             modifier = Modifier
@@ -902,15 +1007,6 @@ private fun HomeScreenContent(
                                                                 .height(90.dp),
                                                             colorFilter = colorFilter
                                                         )
-
-
-
-
-                                                    }
-
-                                                    onEvent(HomeScreenEvent.FilterSelectedForUse(importedImageUri,
-                                                        bitmap = bitmap!!, SelectFilter(
-                                                            index = selectedFilter!!)))
 
                                                 }
 

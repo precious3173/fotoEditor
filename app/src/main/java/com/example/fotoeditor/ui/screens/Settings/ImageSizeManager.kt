@@ -2,6 +2,8 @@ package com.example.fotoeditor.ui.screens.Settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import java.io.ByteArrayOutputStream
 
 class ImageSizeManager(private val context: Context) {
 
@@ -21,4 +23,7 @@ class ImageSizeManager(private val context: Context) {
     fun setSelectedImageSize(selectedSize: String) {
         sharedPrefs.edit().putString(PREF_SIZE, selectedSize).apply()
     }
+
+
+
 }

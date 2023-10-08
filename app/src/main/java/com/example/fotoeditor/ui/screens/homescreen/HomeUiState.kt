@@ -4,6 +4,7 @@ package com.example.fotoeditor.ui.screens.homescreen
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.ui.graphics.ColorFilter
 import com.example.fotoeditor.domain.models.ImageFilterState
 
 data class HomeUiState(
@@ -25,5 +26,10 @@ data class HomeUiState(
     var filterSelected: Boolean = false,
     var filterSelectedForUSe: Uri? = null,
     var shouldSendEditedImageUri: Boolean = false,
-    var imageSizing: String = ""
+    var imageSizing: String = "",
+    var imageLookChecked: Boolean = false,
+    var getImageBitmap: Bitmap? = null,
+    var colorFilter: ColorFilter? = null,
+    var colorFilterArray: FloatArray = FloatArray(20),
+    var filterBitmap: Bitmap? = null
 )

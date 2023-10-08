@@ -15,6 +15,8 @@ import android.widget.Toast
 import androidx.compose.ui.graphics.Canvas
 import android.graphics.Paint
 import android.media.MediaScannerConnection
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
@@ -77,7 +79,10 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.FilterSelectedForUse -> onFilterSelectedForUSe(event.uri, event.bitmap, event.colorFilter)
             is HomeScreenEvent.SendEditedUri -> onSendEditedUri()
             is HomeScreenEvent.ImageSizingUpdate -> onImageSizingUpdate(event.imageSize)
-
+            is HomeScreenEvent.UpdatedImageCheck -> onUpdateImageCheck()
+            is HomeScreenEvent.imageDetails -> getImageDetails(event.bitmap, event.colorFilter, event.colorFilterArray)
+            is HomeScreenEvent.FilteredUri -> getFilterUri(event.bitmap)
+            is HomeScreenEvent.updateGetBitmap -> updateGetBitmap(event.bitmap)
 
         }
     }
@@ -417,6 +422,44 @@ class HomeScreenViewModel @Inject constructor(
             }
         }.getOrDefault(originalImage)
     }
+
+    private fun onUpdateImageCheck(){
+        _uiState.update {
+            it.copy(
+                filterSelected = false,
+                imageLookChecked = true
+            )
+        }
+    }
+
+    private fun getImageDetails(bitmap: Bitmap?, colorFilter: ColorFilter?, colorFilterArray: FloatArray){
+
+        _uiState.update {
+            it.copy(
+                getImageBitmap = bitmap,
+                colorFilter = colorFilter,
+                colorFilterArray = colorFilterArray,
+
+            )
+        }
+    }
+
+    private fun getFilterUri(bitmap: Bitmap?){
+        _uiState.update {
+            it.copy(
+                filterBitmap = bitmap
+            )
+        }
+    }
+
+    private fun updateGetBitmap(bitmap: Bitmap){
+        _uiState.update {
+            it.copy(
+                getImageBitmap = bitmap
+            )
+        }
+    }
+
 }
 
 
@@ -455,6 +498,9 @@ sealed interface HomeScreenEvent : Event {
     object FilterUnSelected:  HomeScreenEvent
 
     object SendEditedUri: HomeScreenEvent
+    object UpdatedImageCheck: HomeScreenEvent
     data class ImageSizingUpdate(val imageSize: String): HomeScreenEvent
-
+    data class imageDetails(val bitmap: Bitmap?,val colorFilter: ColorFilter?, val colorFilterArray: FloatArray): HomeScreenEvent
+    data class FilteredUri(val bitmap: Bitmap?): HomeScreenEvent
+    data class updateGetBitmap(val bitmap: Bitmap): HomeScreenEvent
 }
