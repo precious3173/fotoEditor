@@ -433,14 +433,25 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                 when (it.title) {
 
                                                     "Share" -> {
-                                                        viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                            bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
 
-                                                        viewModel.onEvent(HomeScreenEvent.SaveImage)
-                                                        shareFile(
-                                                            context,
-                                                            uiState.filterSelectedForUSe
-                                                        )
+                                                        if (uiState.shouldSendEditedImageUri) {
+                                                            viewModel.onEvent(
+                                                                HomeScreenEvent.FilterSelectedForUse(
+                                                                    uiState.savedImageUri,
+                                                                    bitmap = uiState.savedImageBitmap!!,
+                                                                    uiState.savedColorArray!!
+                                                                )
+                                                            )
+
+                                                            scope.launch {
+                                                                delay(4000L)
+                                                                viewModel.onEvent(HomeScreenEvent.SaveImage)
+                                                                shareFile(
+                                                                    context,
+                                                                    uiState.filterSelectedForUSe
+                                                                )
+                                                            }
+                                                        }
 
                                                     }
 
@@ -486,13 +497,16 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         try {
+                                                            if (uiState.shouldSendEditedImageUri){
+                                                                viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
+                                                                    bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                            }
 
-                                                            viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                                bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
 //                                                            SaveImage.SaveImageToGallery.saveToGallery(
 //                                                                context,
 //                                                                uiState.filterSelectedForUSe!!
 //                                                            )
+
 //                                                            viewModel.onEvent(
 //                                                                HomeScreenEvent.LoadEditedImageUri(
 //                                                                    uiState.filterSelectedForUSe!!
@@ -513,8 +527,15 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
 
                                                     "Export as" -> {
                                                         viewModel.onEvent(HomeScreenEvent.SaveImage)
-                                                        viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                            bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                        try {
+                                                            if (uiState.shouldSendEditedImageUri){
+                                                                viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
+                                                                    bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                            }
+
+                                                        } catch (e: Exception) {
+                                                            e.stackTrace
+                                                        }
                                                         ExportAs.ExportToDownload.ExportAs(
                                                             context,
                                                             uiState.filterSelectedForUSe!!

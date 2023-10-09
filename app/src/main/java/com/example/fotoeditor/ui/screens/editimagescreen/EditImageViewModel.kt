@@ -27,7 +27,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateToolId -> onUpdateToolId(event.id)
             is EditImageEvent.UpdateImagePreview -> onUpdateImagePreview(event.uri)
             is EditImageEvent.UpdateProgress -> onUpdateProgress(event.progress)
-            is EditImageEvent.UpdateTune -> onUpdateTune()
+            is EditImageEvent.UpdateTune -> onUpdateTune(event.boolean)
             is EditImageEvent.UpdateColor -> onUpdateColor(event.colorMatrix)
         }
     }
@@ -44,9 +44,9 @@ class EditImageViewModel @Inject constructor(
         _uiState.update { it.copy(progress = progress) }
     }
 
-    private fun onUpdateTune() {
+    private fun onUpdateTune(boolean: Boolean) {
         _uiState.update { it.copy(
-            isTuneDialogVisible = true
+            isTuneDialogVisible = boolean
         ) }
     }
 
@@ -63,7 +63,7 @@ sealed interface EditImageEvent : Event {
     data class UpdateToolId(val id: Int) : EditImageEvent
     data class UpdateImagePreview(val uri: Uri?) : EditImageEvent
     data class UpdateProgress(val progress: Float) : EditImageEvent
-    object UpdateTune: EditImageEvent
+    data class UpdateTune(val boolean: Boolean): EditImageEvent
     data class UpdateColor(val colorMatrix: ColorMatrix): EditImageEvent
 
 }

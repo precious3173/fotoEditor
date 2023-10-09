@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,11 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Slider
+import androidx.compose.material.SliderDefaults
 import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SliderColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +46,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.fotoeditor.ui.screens.Settings.ColorMatrixTuneImage.colorMatrix.createColorMatrix
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageEvent
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
@@ -49,7 +56,7 @@ import com.example.fotoeditor.ui.utils.Event
 import java.io.InputStream
 
 @SuppressLint("SuspiciousIndentation")
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TuneImageDialog(
     visible: Boolean,
@@ -60,23 +67,24 @@ fun TuneImageDialog(
     var offsetY by remember { mutableStateOf(0f) }
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val screenHeight = 400.dp
-    val cardHeight = 300.dp
+    val screenHeight = 300.dp
+    val cardHeight = 250.dp
     val cardWidth = 300.dp
     val cardBackgroundAlpha = 0.7f // Adjust transparency as needed
+
 
     val cardModifier = Modifier
         .height(cardHeight)
         .width(cardWidth)
         .offset(y = offsetY.dp)
-        .pointerInput(Unit) {
-            detectVerticalDragGestures { _, dragAmount ->
-                offsetY += dragAmount
-
-                // Ensure the card stays within the screen bounds
-                offsetY = offsetY.coerceIn(0f, (screenHeight - cardHeight).toPx())
-            }
-        }
+//        .pointerInput(Unit) {
+//            detectVerticalDragGestures { _, dragAmount ->
+//                offsetY += dragAmount
+//
+//                // Ensure the card stays within the screen bounds
+//                offsetY = offsetY.coerceIn(0f, (screenHeight - cardHeight).toPx())
+//            }
+//        }
 
     var brightness by remember { mutableStateOf(0.0f) }
     var contrast by remember { mutableStateOf(0.0f) }
@@ -89,85 +97,83 @@ fun TuneImageDialog(
 
 
     if (visible) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .clickable {
-                    onDismiss()
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        if (offset.x < 0 || offset.x > 1 || offset.y < 0 || offset.y > 1) {
-                            onDismiss()
-                        }
-                    }
-                }
-        ) {
-            Box (
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.BottomCenter
-            ){
-            Card(
-                modifier = cardModifier,
-                elevation = 8.dp,
-                backgroundColor = Color.White.copy(alpha = cardBackgroundAlpha) // Adjust transparency here
-            ) {
-                Column(
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+          properties = DialogProperties(dismissOnClickOutside = true),
+            modifier = Modifier.fillMaxSize(),
+            content = {
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(
-                            enabled = true,
-                            state = scrollState
-                        ),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .background(Color.Transparent)
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                if (offset.x < 0 || offset.x > 1 || offset.y < 0 || offset.y > 1) {
+                                    onDismiss()
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    SliderValue(
-                        label = "Brightness",
-                        value = brightness,
-                        onValueChange = { newValue -> brightness = newValue },
-                    )
 
-                    SliderValue(
-                        label = "Contrast",
-                        value = contrast,
-                        onValueChange = { newValue -> contrast = newValue }
-                    )
+                    Card(
+                        modifier = cardModifier,
+                        elevation = 2.dp,
+                        backgroundColor = Color.Transparent // Adjust transparency here
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(
+                                    enabled = true,
+                                    state = scrollState
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            SliderValue(
+                                label = "Brightness",
+                                value = brightness,
+                                onValueChange = { newValue -> brightness = newValue },
+                            )
 
-                    SliderValue(
-                        label = "Ambiance",
-                        value = ambiance,
-                        onValueChange = { newValue -> ambiance = newValue }
-                    )
+                            SliderValue(
+                                label = "Contrast",
+                                value = contrast,
+                                onValueChange = { newValue -> contrast = newValue }
+                            )
 
-                    SliderValue(
-                        label = "Highlights",
-                        value = highlights,
-                        onValueChange = { newValue -> highlights = newValue }
-                    )
+                            SliderValue(
+                                label = "Ambiance",
+                                value = ambiance,
+                                onValueChange = { newValue -> ambiance = newValue }
+                            )
 
-                    SliderValue(
-                        label = "Shadows",
-                        value = shadows,
-                        onValueChange = { newValue -> shadows = newValue }
-                    )
+                            SliderValue(
+                                label = "Highlights",
+                                value = highlights,
+                                onValueChange = { newValue -> highlights = newValue }
+                            )
 
-                    SliderValue(
-                        label = "Warmth",
-                        value = warmth,
-                        onValueChange = { newValue -> warmth = newValue }
-                    )
+                            SliderValue(
+                                label = "Shadows",
+                                value = shadows,
+                                onValueChange = { newValue -> shadows = newValue }
+                            )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            SliderValue(
+                                label = "Warmth",
+                                value = warmth,
+                                onValueChange = { newValue -> warmth = newValue }
+                            )
+
+
+                        }
 
                     }
                 }
             }
-        }
-        }
+
+        )
         LaunchedEffect(brightness, contrast, ambiance, highlights, shadows, warmth) {
             val adjustments = ImageAdjustments(
                 brightness = brightness,
@@ -189,44 +195,47 @@ fun TuneImageDialog(
             if (colorMatrix != null) {
                 onEvent(EditImageEvent.UpdateColor(colorMatrix))
             }
+        }
     }
 }
+
+
+
 
 
 @Composable
 fun SliderValue(
     label: String,
     value: Float,
-    onValueChange: (Float) -> Unit
+    onValueChange: (Float) -> Unit,
 ) {
-    Column {
-        Text(text = label, style = MaterialTheme.typography.caption)
-        Slider(
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box{
+            Text(text = label, style = MaterialTheme.typography.caption.copy(color = Color.White))
+        }
+      Box { Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = -1f..1f,
             steps = 100,
-            modifier = Modifier.fillMaxWidth()
+            colors = SliderDefaults.colors(
+                activeTrackColor = Color.White,
+                thumbColor = Color.Transparent,
+                activeTickColor = Color.Transparent,
+                disabledActiveTickColor = Color.Transparent
+            )
+
         )
-        Text(
-            text = value.toString(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 2.dp)
-        )
+      }
+
+//
+//        Text(
+//            text = value.toInt().toString(),
+//            color = Color.White
+//        )
     }
 }
 
-//fun loadBitmapFromUri(contentResolver: ContentResolver, uri: Uri): ImageBitmap? {
-//    var inputStream: InputStream? = null
-//    return try {
-//        inputStream = contentResolver.openInputStream(uri)
-//        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-//    } catch (e: Exception) {
-//        // Handle any exceptions here
-//        null
-//    } finally {
-//        inputStream?.close()
-//    }
-//}
 

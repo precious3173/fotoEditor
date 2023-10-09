@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -115,7 +116,8 @@ fun EditImageRoute(
                         )
 
             }
-        }
+        },
+
     )
 
 
@@ -123,7 +125,7 @@ fun EditImageRoute(
    TuneImageDialog(
        visible = uiState.isTuneDialogVisible,
        onDismiss = {
-           uiState.isTuneDialogVisible = false
+           editImageViewModel.onEvent(EditImageEvent.UpdateTune(false))
        },
        onAdjustmentsChanged = { adjustments ->
            // Handle adjustments here
@@ -143,7 +145,7 @@ fun EditImageMode(
     when(selectToolId){
         1 -> {
             IconButton(onClick = {
-             onEvent(EditImageEvent.UpdateTune)
+             onEvent(EditImageEvent.UpdateTune(true))
             }) {
                 Icon(painterResource(id =  R.drawable.icon_tune_image)
                     , contentDescription = null,
@@ -169,25 +171,27 @@ private fun EditImageScreen(
     uiState: EditImageUiState,
 ) {
     val TAG = "EditImage"
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize().clickable {
+        onEvent(EditImageEvent.UpdateTune(false)  )
+    }, contentAlignment = Alignment.Center) {
         imageUri?.let {
             EditImageContent(
-                modifier = modifier,
+                modifier = modifier.clickable {  onEvent(EditImageEvent.UpdateTune(false)) },
                 bitmap = it.toBitmap(LocalContext.current),
                 uiState = uiState
             )
         }
-
-        Box(
-            Modifier
-                .fillMaxSize()
-                .pointerInput(onEvent) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        onEvent(EditImageEvent.UpdateProgress(dragAmount.x / 10f))
-                    }
-                }
-        )
+//
+//        Box(
+//            Modifier
+//                .fillMaxSize()
+//                .pointerInput(onEvent) {
+//                    detectDragGestures { change, dragAmount ->
+//                        change.consume()
+//                        onEvent(EditImageEvent.UpdateProgress(dragAmount.x / 10f))
+//                    }
+//                }
+//        )
     }
 
 }
@@ -213,7 +217,7 @@ private fun EditImageContent(
                      modifier = Modifier
                          .fillMaxSize(),
                      contentScale = ContentScale.Fit,
-                     colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix!!)
+                     colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix)
                  )
 
              }

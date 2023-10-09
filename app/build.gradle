@@ -12,6 +12,7 @@ android {
     defaultConfig {
         applicationId "com.example.fotoeditor"
         minSdk 21
+        //noinspection ExpiredTargetSdkVersion
         targetSdk 32
         versionCode 1
         versionName "1.0"
@@ -84,4 +85,5 @@ dependencies {
     implementation "androidx.hilt:hilt-navigation-compose:$hilt_compose_version"
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
+   // implementation "io.github.vanpra.compose-material-dialogs:core:0.90"
 }
