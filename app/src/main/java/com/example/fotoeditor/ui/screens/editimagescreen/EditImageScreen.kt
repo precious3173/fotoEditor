@@ -1,7 +1,11 @@
 package com.example.fotoeditor.ui.screens.editimagescreen
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,19 +25,23 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.R
+import com.example.fotoeditor.ui.components.AutoTune.AutoTune.autoTuneImage
 import com.example.fotoeditor.ui.components.EditImageBottomBar
 import com.example.fotoeditor.ui.components.TuneImageDialog
 import com.example.fotoeditor.ui.nav.Navigator
@@ -42,6 +50,7 @@ import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
 
+@SuppressLint("UseCompatLoadingForDrawables")
 @Composable
 fun EditImageRoute(
     toolId: String?,
@@ -135,6 +144,18 @@ fun EditImageRoute(
 
    )
     }
+
+    if (uiState.isAutoTuneDialogVisible){
+        val context = LocalContext.current
+        val imageUri = uiState.imagePreview!!
+        val imageBitmap= loadImageFromUri(context = context, imageUri = imageUri )
+
+
+        val adjustedImageBitmap = autoTuneImage(imageBitmap!!.asImageBitmap(), 1.6f, 1.2f, 0.8f)
+         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
+
+
+    }
 }
 
 @Composable
@@ -146,6 +167,7 @@ fun EditImageMode(
         1 -> {
             IconButton(onClick = {
              onEvent(EditImageEvent.UpdateTune(true))
+                onEvent(EditImageEvent.UpdateAutoTune(false))
             }) {
                 Icon(painterResource(id =  R.drawable.icon_tune_image)
                     , contentDescription = null,
@@ -153,7 +175,9 @@ fun EditImageMode(
                 )
             }
             Spacer(modifier = Modifier.width(15.dp))
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                onEvent(EditImageEvent.UpdateAutoTune(true))
+            }) {
                 Icon(painterResource(id =  R.drawable.baseline_auto_fix_normal_24)
                     , contentDescription = null,
                     tint = Color.Gray)
@@ -171,12 +195,14 @@ private fun EditImageScreen(
     uiState: EditImageUiState,
 ) {
     val TAG = "EditImage"
-    Box(Modifier.fillMaxSize().clickable {
-        onEvent(EditImageEvent.UpdateTune(false)  )
-    }, contentAlignment = Alignment.Center) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clickable {
+                onEvent(EditImageEvent.UpdateTune(false))
+            }, contentAlignment = Alignment.Center) {
         imageUri?.let {
             EditImageContent(
-                modifier = modifier.clickable {  onEvent(EditImageEvent.UpdateTune(false)) },
                 bitmap = it.toBitmap(LocalContext.current),
                 uiState = uiState
             )
@@ -223,7 +249,26 @@ private fun EditImageContent(
              }
 
          }
+     } else if (uiState.autoTuneBitmap != null){
+         Toast.makeText(LocalContext.current, "autotune working", Toast.LENGTH_SHORT).show()
+         Box(
+             Modifier
+                 .fillMaxSize()
+                 .then(modifier)
+         ) {
+
+             Image(
+                 bitmap = uiState.autoTuneBitmap!!,
+                 contentDescription = null,
+                 modifier = Modifier
+                     .fillMaxSize(),
+                 contentScale = ContentScale.Fit,
+             )
+
+         }
+
      }
+
     else{
     bitmap?.let {
         Box(
@@ -245,3 +290,24 @@ private fun EditImageContent(
     }
     }
 }
+
+
+@Composable
+fun loadImageFromUri(context: Context, imageUri: Uri?): Bitmap? {
+
+        try {
+            val contentResolver = context.contentResolver
+            val inputStream = contentResolver.openInputStream(imageUri!!)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            return bitmap
+        } catch (e: Exception) {
+            // Handle any exceptions that may occur during image loading
+            e.stackTrace
+        }
+      return null
+}
+
+
+
+
+

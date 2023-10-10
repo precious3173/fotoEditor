@@ -71,7 +71,7 @@ fun TuneImageDialog(
     val cardHeight = 250.dp
     val cardWidth = 300.dp
     val cardBackgroundAlpha = 0.7f // Adjust transparency as needed
-
+    var slidersChanged by remember { mutableStateOf(false) }
 
     val cardModifier = Modifier
         .height(cardHeight)
@@ -133,37 +133,50 @@ fun TuneImageDialog(
                             SliderValue(
                                 label = "Brightness",
                                 value = brightness,
-                                onValueChange = { newValue -> brightness = newValue },
+                                onValueChange = { newValue -> brightness = newValue
+                                    slidersChanged = true
+                                                },
                             )
 
                             SliderValue(
                                 label = "Contrast",
                                 value = contrast,
-                                onValueChange = { newValue -> contrast = newValue }
+                                onValueChange = { newValue -> contrast = newValue
+                                    slidersChanged = true
+                                }
+
                             )
 
                             SliderValue(
                                 label = "Ambiance",
                                 value = ambiance,
-                                onValueChange = { newValue -> ambiance = newValue }
+                                onValueChange = { newValue -> ambiance = newValue
+                                    slidersChanged = true
+                                }
                             )
 
                             SliderValue(
                                 label = "Highlights",
                                 value = highlights,
-                                onValueChange = { newValue -> highlights = newValue }
+                                onValueChange = { newValue -> highlights = newValue
+                                    slidersChanged = true
+                                }
                             )
 
                             SliderValue(
                                 label = "Shadows",
                                 value = shadows,
-                                onValueChange = { newValue -> shadows = newValue }
+                                onValueChange = { newValue -> shadows = newValue
+                                    slidersChanged = true
+                                }
                             )
 
                             SliderValue(
                                 label = "Warmth",
                                 value = warmth,
-                                onValueChange = { newValue -> warmth = newValue }
+                                onValueChange = { newValue -> warmth = newValue
+                                    slidersChanged = true
+                                }
                             )
 
 
@@ -174,6 +187,7 @@ fun TuneImageDialog(
             }
 
         )
+        if (slidersChanged){
         LaunchedEffect(brightness, contrast, ambiance, highlights, shadows, warmth) {
             val adjustments = ImageAdjustments(
                 brightness = brightness,
@@ -195,6 +209,7 @@ fun TuneImageDialog(
             if (colorMatrix != null) {
                 onEvent(EditImageEvent.UpdateColor(colorMatrix))
             }
+        }
         }
     }
 }

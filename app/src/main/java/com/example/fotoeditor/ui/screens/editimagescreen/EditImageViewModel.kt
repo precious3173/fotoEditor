@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler
@@ -28,7 +29,9 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateImagePreview -> onUpdateImagePreview(event.uri)
             is EditImageEvent.UpdateProgress -> onUpdateProgress(event.progress)
             is EditImageEvent.UpdateTune -> onUpdateTune(event.boolean)
+            is EditImageEvent.UpdateAutoTune -> onUpdateAutoTune(event.boolean)
             is EditImageEvent.UpdateColor -> onUpdateColor(event.colorMatrix)
+            is EditImageEvent.UpdateAutoTuneBitmap -> onAutoTuneBitmap(event.imageBitmap)
         }
     }
 
@@ -50,12 +53,26 @@ class EditImageViewModel @Inject constructor(
         ) }
     }
 
+    private fun onUpdateAutoTune(boolean: Boolean) {
+        _uiState.update { it.copy(
+            isAutoTuneDialogVisible = boolean
+        ) }
+    }
+
     private fun onUpdateColor(colorMatrix: ColorMatrix){
      _uiState.update {
          it.copy(
              editColorMatrix = colorMatrix
          )
      }
+    }
+
+    private fun onAutoTuneBitmap(imageBitmap: ImageBitmap){
+        _uiState.update {
+            it.copy(
+                autoTuneBitmap = imageBitmap
+            )
+        }
     }
 }
 
@@ -64,6 +81,10 @@ sealed interface EditImageEvent : Event {
     data class UpdateImagePreview(val uri: Uri?) : EditImageEvent
     data class UpdateProgress(val progress: Float) : EditImageEvent
     data class UpdateTune(val boolean: Boolean): EditImageEvent
+
+    data class UpdateAutoTune(val boolean: Boolean): EditImageEvent
     data class UpdateColor(val colorMatrix: ColorMatrix): EditImageEvent
+
+    data class UpdateAutoTuneBitmap(val imageBitmap: ImageBitmap): EditImageEvent
 
 }
