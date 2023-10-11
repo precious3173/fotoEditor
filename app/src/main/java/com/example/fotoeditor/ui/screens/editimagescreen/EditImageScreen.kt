@@ -151,9 +151,11 @@ fun EditImageRoute(
         val imageBitmap= loadImageFromUri(context = context, imageUri = imageUri )
 
 
-        val adjustedImageBitmap = autoTuneImage(imageBitmap!!.asImageBitmap(), 1.6f, 1.2f, 0.8f)
-         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
-
+        val adjustedImageBitmap = autoTuneImage(imageBitmap!!.asImageBitmap(), 1.2f, 1.2f, 0.8f)
+//         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
+        if (adjustedImageBitmap != null) {
+            editImageViewModel.onEvent(EditImageEvent.UpdateColor(adjustedImageBitmap))
+        }
 
     }
 }
@@ -177,6 +179,7 @@ fun EditImageMode(
             Spacer(modifier = Modifier.width(15.dp))
             IconButton(onClick = {
                 onEvent(EditImageEvent.UpdateAutoTune(true))
+                onEvent(EditImageEvent.UpdateTune(false))
             }) {
                 Icon(painterResource(id =  R.drawable.baseline_auto_fix_normal_24)
                     , contentDescription = null,
