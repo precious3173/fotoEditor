@@ -4,17 +4,21 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
+import com.example.fotoeditor.ui.screens.homescreen.HomeUiState
 
 
 class AutoTune{
     object AutoTune{
 
-        fun autoTuneImage(imageBitmap: ImageBitmap, brightness: Float, contrast: Float, saturation: Float): ColorMatrix {
+        fun autoTuneImage( brightness: Float, contrast: Float, saturation: Float, homeScreenViewModel: HomeScreenViewModel, imageUri: Uri, bitmap: Bitmap): ColorMatrix {
             // Create a ColorMatrix that combines adjustments for brightness, contrast, and saturation
             // Create a ColorMatrix that combines adjustments for brightness, contrast, and saturation
             var colorMatrix = ColorMatrix()
@@ -45,6 +49,19 @@ class AutoTune{
                 contrastMatrix, brightnessMatrix
             ))
 
+
+            val floatArray = FloatArray(20)
+
+            for (i in 0 until 4) {
+                for (j in 0 until 5) {
+                    floatArray[i * 5 + j] = colorMatrix[i, j]
+                }
+            }
+
+            if (floatArray !=null){
+                homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(floatArray, imageUri, bitmap))
+
+            }
             return colorMatrix
 
             // Combine the matrices

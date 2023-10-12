@@ -15,6 +15,8 @@ import android.widget.Toast
 import androidx.compose.ui.graphics.Canvas
 import android.graphics.Paint
 import android.media.MediaScannerConnection
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
@@ -79,6 +81,8 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.ImageSizingUpdate -> onImageSizingUpdate(event.imageSize)
             is HomeScreenEvent.SaveImage -> onUpdateSaveImage()
             is HomeScreenEvent.UpdateFilterIndex -> updateFilterIndex(event.index)
+            is HomeScreenEvent.EditImageColorMatrix -> EditImageColorMatrix(event.colorMatrix)
+            is HomeScreenEvent.updateEditColorFilterArray -> updateEditColorFilterArray(event.colorArray, event.imageUri, event.bitmap)
 
 
         }
@@ -139,6 +143,28 @@ class HomeScreenViewModel @Inject constructor(
     @SuppressLint("SuspiciousIndentation", "Recycle")
     private fun onFilterSelectedForUSe (uriImport: Uri?, bitmap: Bitmap?, colorFilterArray: FloatArray) {
     if (_uiState.value.saveUri)  {
+
+//        val getColorMatrix = uiState.value.savedColorMatrix
+//
+//// Create a FloatArray to hold the matrix values
+//        var floatArray = FloatArray(0)
+//
+//        if (colorFilterArray != null){
+//
+//            System.arraycopy(colorFilterArray, 0, floatArray, 0, 20)
+//        } else {
+//            // Manually extract the matrix values from getColorMatrix
+//            for (row in 0 until 4) {
+//                for (col in 0 until 5) {
+//                    floatArray[row * 5 + col] = getColorMatrix!!.get(row, col)
+//                }
+//            }
+//
+//        }
+
+        if (bitmap == null){
+            Toast.makeText(context, "bitmap is empty", Toast.LENGTH_SHORT).show()
+        }
 
             val filteredBitmap = bitmap!!.copy(Bitmap.Config.ARGB_8888, true)
             val canvas = android.graphics.Canvas(filteredBitmap)
@@ -268,7 +294,11 @@ class HomeScreenViewModel @Inject constructor(
                  it.copy(
                      savedImageBitmap = bitmap,
                      savedImageUri = uri,
-                     savedColorArray = colorFilterArray
+                     savedColorArray = colorFilterArray,
+                     savedColorMatrix = ColorMatrix(colorFilterArray)
+
+//                     colorMatrix(
+//                         ColorMatrix(savedColorArray)
                  )
              }
 
@@ -422,6 +452,24 @@ class HomeScreenViewModel @Inject constructor(
 //        }
     }
 
+    private fun EditImageColorMatrix(colorMatrix: ColorMatrix){
+        _uiState.update {
+            it.copy(
+                savedColorMatrix = colorMatrix
+            )
+        }
+    }
+
+    private fun updateEditColorFilterArray(colorArray: FloatArray, imageUri: Uri, bitmap: Bitmap?){
+        _uiState.update {
+            it.copy(
+                savedColorArray = colorArray,
+                savedImageUri = imageUri,
+                savedImageBitmap = bitmap
+
+            )
+        }
+    }
 
     private fun onImageSizingUpdate(imageSize: String){
         _uiState.update {
@@ -482,5 +530,9 @@ sealed interface HomeScreenEvent : Event {
 
     object SaveImage: HomeScreenEvent
     data class UpdateFilterIndex(val index: Int): HomeScreenEvent
+
+    data class EditImageColorMatrix(val colorMatrix: ColorMatrix): HomeScreenEvent
+
+    data class updateEditColorFilterArray(val colorArray: FloatArray, val imageUri: Uri, val bitmap: Bitmap?): HomeScreenEvent
 
 }

@@ -99,16 +99,14 @@ import com.example.fotoeditor.ui.ExportImage.ExportAs
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
-import com.example.fotoeditor.ui.ExportImage.SaveImage
 import com.example.fotoeditor.ui.screens.Settings.ThemeManager
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.lang.Exception
+import kotlin.Exception
 
 
 @SuppressLint("Recycle", "IntentReset")
@@ -279,9 +277,10 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     textColor = textColor,
                     isDarkTheme = isDarkTheme,
                     shouldExpandTools = uiState.shouldExpandTools,
-                    backgroundColor = backgroundColor
+                    backgroundColor = backgroundColor,
+                    uiState = uiState
 
-                )
+                    )
             },
             bottomBar = {
                 val coroutineScope = rememberCoroutineScope()
@@ -317,9 +316,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                     .padding(top = 20.dp, bottom = 10.dp)
                                     .clickable {
 
-                                            accessStorage()
-                                            viewModel.onEvent(HomeScreenEvent.SendEditedUri)
-
+                                        accessStorage()
+                                        viewModel.onEvent(HomeScreenEvent.SendEditedUri)
 
 
                                     }
@@ -444,7 +442,7 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                             )
 
                                                             scope.launch {
-                                                                delay(4000L)
+                                                                delay(2000L)
                                                                 viewModel.onEvent(HomeScreenEvent.SaveImage)
                                                                 shareFile(
                                                                     context,
@@ -462,9 +460,14 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         try {
-                                                            if (uiState.shouldSendEditedImageUri){
-                                                            viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                                bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                            if (uiState.shouldSendEditedImageUri) {
+                                                                viewModel.onEvent(
+                                                                    HomeScreenEvent.FilterSelectedForUse(
+                                                                        uiState.savedImageUri,
+                                                                        bitmap = uiState.savedImageBitmap!!,
+                                                                        uiState.savedColorArray!!
+                                                                    )
+                                                                )
                                                             }
 
 //                                                            SaveImage.SaveImageToGallery.saveToGallery(
@@ -497,9 +500,14 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                         viewModel.onEvent(HomeScreenEvent.ToggleLooks)
                                                         viewModel.onEvent(HomeScreenEvent.OnOpenDialog)
                                                         try {
-                                                            if (uiState.shouldSendEditedImageUri){
-                                                                viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                                    bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                            if (uiState.shouldSendEditedImageUri) {
+                                                                viewModel.onEvent(
+                                                                    HomeScreenEvent.FilterSelectedForUse(
+                                                                        uiState.savedImageUri,
+                                                                        bitmap = uiState.savedImageBitmap!!,
+                                                                        uiState.savedColorArray!!
+                                                                    )
+                                                                )
                                                             }
 
 //                                                            SaveImage.SaveImageToGallery.saveToGallery(
@@ -528,9 +536,14 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                                                     "Export as" -> {
                                                         viewModel.onEvent(HomeScreenEvent.SaveImage)
                                                         try {
-                                                            if (uiState.shouldSendEditedImageUri){
-                                                                viewModel.onEvent(HomeScreenEvent.FilterSelectedForUse(uiState.savedImageUri,
-                                                                    bitmap = uiState.savedImageBitmap!!, uiState.savedColorArray!!))
+                                                            if (uiState.shouldSendEditedImageUri) {
+                                                                viewModel.onEvent(
+                                                                    HomeScreenEvent.FilterSelectedForUse(
+                                                                        uiState.savedImageUri,
+                                                                        bitmap = uiState.savedImageBitmap!!,
+                                                                        uiState.savedColorArray!!
+                                                                    )
+                                                                )
                                                             }
 
                                                         } catch (e: Exception) {
@@ -616,7 +629,8 @@ private fun HomeScreen(
     textColor: Color,
     isDarkTheme: Boolean,
     shouldExpandTools: Boolean,
-    backgroundColor: Color
+    backgroundColor: Color,
+    uiState: HomeUiState
 
 ) {
     val offset = 20
@@ -665,7 +679,8 @@ private fun HomeScreen(
             textColor = textColor,
             shouldExpandTools = shouldExpandTools,
             navigator = navigator,
-            backgroundColor = backgroundColor
+            backgroundColor = backgroundColor,
+            uiState = uiState
         )
     }
 }
@@ -689,14 +704,26 @@ private fun HomeScreenContent(
     textColor: Color,
     shouldExpandTools: Boolean,
      navigator: Navigator,
-    backgroundColor: Color
+    backgroundColor: Color,
+    uiState: HomeUiState
 
 
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
        var bitmap: Bitmap? = null
+        var savedColorMatrix: ColorMatrix =  ColorMatrix(SelectFilter(selectedFilter!!))
+
        if (importedImageUri !=null){
-               bitmap= importedImageUri.toBitmap(LocalContext.current)}
+               bitmap= importedImageUri.toBitmap(LocalContext.current)
+
+       }
+
+        try {
+            if (uiState.savedColorMatrix != null) savedColorMatrix = uiState.savedColorMatrix!!
+
+        } catch (e: Exception) {
+            e.stackTrace
+        }
 
 
 
@@ -743,6 +770,7 @@ private fun HomeScreenContent(
             true -> {
                 val context = LocalContext.current
 
+
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
 
                     Column(
@@ -762,7 +790,8 @@ private fun HomeScreenContent(
                                     .animateContentSize()
                                     .weight(1f),
                                 colorFilter = ColorFilter.colorMatrix(
-                                    ColorMatrix(SelectFilter(selectedFilter!!))
+                                    savedColorMatrix
+//                                    ColorMatrix(SelectFilter(selectedFilter!!))
                                 )
                             )
                         }
@@ -925,20 +954,23 @@ private fun HomeScreenContent(
                                                     onClick = {
 
                                                         onEvent(
-                                                            HomeScreenEvent.UpdateFilterIndex(index)
+                                                            HomeScreenEvent.UpdateFilterIndex(
+                                                                index
+                                                            )
                                                         )
-                                                       coroutineScope.launch {
-                                                           delay(4000L)
-                                                           onEvent(
-                                                               HomeScreenEvent.UpdateFilter(bitmap = bitmap, uri = importedImageUri,
-                                                                   colorFilterArray = selectFilters
-                                                               )
+                                                        coroutineScope.launch {
+                                                            delay(2000L)
+                                                            onEvent(
+                                                                HomeScreenEvent.UpdateFilter(
+                                                                    bitmap = bitmap,
+                                                                    uri = importedImageUri,
+                                                                    colorFilterArray = selectFilters
+                                                                )
 
-                                                           )
-                                                       }
+                                                            )
+                                                        }
 
-                                                            onEvent(HomeScreenEvent.FilterSelected)
-
+                                                        onEvent(HomeScreenEvent.FilterSelected)
 
 
                                                     }

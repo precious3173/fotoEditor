@@ -1,5 +1,9 @@
 package com.example.fotoeditor.ui.screens.Settings
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.ui.graphics.ColorMatrix
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 
 class ColorMatrixTuneImage {
 
@@ -11,7 +15,10 @@ class ColorMatrixTuneImage {
             ambiance: Float,
             highlights: Float,
             shadows: Float,
-            warmth: Float
+            warmth: Float,
+            homeScreenViewModel: HomeScreenViewModel,
+            imageUri: Uri,
+            bitmap: Bitmap
         ): ColorMatrix {
             var colorMatrix = ColorMatrix()
 
@@ -89,6 +96,19 @@ class ColorMatrixTuneImage {
                         )
                     )
             )
+
+            val floatArray = FloatArray(20)
+
+            for (i in 0 until 4) {
+                for (j in 0 until 5) {
+                    floatArray[i * 5 + j] = colorMatrix[i, j]
+                }
+            }
+
+            if (floatArray !=null){
+                homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(floatArray, imageUri, bitmap))
+
+            }
             return colorMatrix
         }
 

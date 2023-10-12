@@ -1,11 +1,16 @@
 package com.example.fotoeditor.ui.screens.editimagescreen
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -46,6 +51,7 @@ import com.example.fotoeditor.ui.components.EditImageBottomBar
 import com.example.fotoeditor.ui.components.TuneImageDialog
 import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
@@ -62,6 +68,31 @@ fun EditImageRoute(
     val uiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
     val homeScreenUiState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
     val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "AnimatedProgress")
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+
+            if (isGranted) {
+                Log.d(ContentValues.TAG, "Access granted")
+            } else {
+                Log.d(ContentValues.TAG, "Access  not granted")
+            }
+        }
+
+    val accessStorage: () -> Unit = {
+        homeScreenViewModel.onEvent(HomeScreenEvent.AccessStorage{
+                hasPermission ->
+            if(hasPermission){
+                Log.d(ContentValues.TAG, "Access granted")
+                // Toast.makeText(context, "Access granted", Toast.LENGTH_SHORT).show()
+            }
+            else{
+                launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                Log.d(ContentValues.TAG, "Access not granted")
+            }
+        })
+
+    }
 
     toolId?.let {
         LaunchedEffect(Unit) {
@@ -95,11 +126,24 @@ fun EditImageRoute(
 
                         EditImageBottomBar(
                             save = {
-                                IconButton(onClick = { /*TODO*/ }) {
+                                IconButton(onClick = { navigator.navigateTo(Screen.HomeScreen.route)
+
+                                accessStorage()
+                                    homeScreenViewModel.onEvent(HomeScreenEvent.SendEditedUri)
+                                    try {
+                                        homeScreenViewModel.onEvent(HomeScreenEvent.EditImageColorMatrix(
+                                            uiState.editColorMatrix!!
+                                        ))
+                                    } catch (e: Exception){
+                                        e.stackTrace
+                                    }
+
+                                }) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = null,
                                         tint = Color.Gray,
+
                                     )
                                 }
                             },
@@ -131,6 +175,9 @@ fun EditImageRoute(
 
 
     if (uiState.isTuneDialogVisible){
+        val context = LocalContext.current
+        val imageUri = uiState.imagePreview!!
+        val bitmap = imageUri.toBitmap(LocalContext.current)
    TuneImageDialog(
        visible = uiState.isTuneDialogVisible,
        onDismiss = {
@@ -141,6 +188,9 @@ fun EditImageRoute(
            println("Adjustments: $adjustments")
        },
        onEvent = editImageViewModel::onEvent,
+       homeScreenViewModel = homeScreenViewModel,
+       imageUri = imageUri,
+       bitmap = bitmap!!
 
    )
     }
@@ -148,10 +198,11 @@ fun EditImageRoute(
     if (uiState.isAutoTuneDialogVisible){
         val context = LocalContext.current
         val imageUri = uiState.imagePreview!!
+        val bitmap = imageUri.toBitmap(LocalContext.current)
         val imageBitmap= loadImageFromUri(context = context, imageUri = imageUri )
 
 
-        val adjustedImageBitmap = autoTuneImage(imageBitmap!!.asImageBitmap(), 1.2f, 1.2f, 0.8f)
+        val adjustedImageBitmap = autoTuneImage(1.2f, 1.2f, 0.8f, homeScreenViewModel, imageUri = imageUri, bitmap = bitmap!!)
 //         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
         if (adjustedImageBitmap != null) {
             editImageViewModel.onEvent(EditImageEvent.UpdateColor(adjustedImageBitmap))
@@ -252,25 +303,26 @@ private fun EditImageContent(
              }
 
          }
-     } else if (uiState.autoTuneBitmap != null){
-         Toast.makeText(LocalContext.current, "autotune working", Toast.LENGTH_SHORT).show()
-         Box(
-             Modifier
-                 .fillMaxSize()
-                 .then(modifier)
-         ) {
-
-             Image(
-                 bitmap = uiState.autoTuneBitmap!!,
-                 contentDescription = null,
-                 modifier = Modifier
-                     .fillMaxSize(),
-                 contentScale = ContentScale.Fit,
-             )
-
-         }
-
      }
+//     else if (uiState.autoTuneBitmap != null){
+//         Toast.makeText(LocalContext.current, "autotune working", Toast.LENGTH_SHORT).show()
+//         Box(
+//             Modifier
+//                 .fillMaxSize()
+//                 .then(modifier)
+//         ) {
+//
+//             Image(
+//                 bitmap = uiState.autoTuneBitmap!!,
+//                 contentDescription = null,
+//                 modifier = Modifier
+//                     .fillMaxSize(),
+//                 contentScale = ContentScale.Fit,
+//             )
+//
+//         }
+//
+//     }
 
     else{
     bitmap?.let {

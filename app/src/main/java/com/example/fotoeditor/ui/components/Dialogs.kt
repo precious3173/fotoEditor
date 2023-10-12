@@ -2,6 +2,7 @@ package com.example.fotoeditor.ui.components
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
@@ -52,17 +53,21 @@ import com.example.fotoeditor.ui.screens.Settings.ColorMatrixTuneImage.colorMatr
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageEvent
 import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
 import com.example.fotoeditor.ui.screens.editimagescreen.ImageAdjustments
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
 import com.example.fotoeditor.ui.utils.Event
 import java.io.InputStream
 
 @SuppressLint("SuspiciousIndentation")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TuneImageDialog(
+fun  TuneImageDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
     onAdjustmentsChanged: (adjustments: ImageAdjustments) -> Unit,
     onEvent: (Event) -> Unit,
+    homeScreenViewModel: HomeScreenViewModel,
+    imageUri: Uri,
+    bitmap: Bitmap
 ) {
     var offsetY by remember { mutableStateOf(0f) }
     val context = LocalContext.current
@@ -203,7 +208,10 @@ fun TuneImageDialog(
                 ambiance = ambiance,
                 highlights = highlights,
                 shadows = shadows,
-                warmth = warmth
+                warmth = warmth,
+                homeScreenViewModel = homeScreenViewModel,
+                imageUri = imageUri,
+                bitmap = bitmap
             )
             onAdjustmentsChanged(adjustments)
             if (colorMatrix != null) {
