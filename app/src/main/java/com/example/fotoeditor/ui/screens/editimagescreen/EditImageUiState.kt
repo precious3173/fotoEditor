@@ -12,5 +12,6 @@ data class EditImageUiState(
     var isTuneDialogVisible:Boolean = false,
     val editColorMatrix: ColorMatrix? = null,
     var isAutoTuneDialogVisible:Boolean = false,
-    var autoTuneBitmap: ImageBitmap?= null
+    var autoTuneBitmap: ImageBitmap?= null,
+    var showCropOption: Boolean = false
 )

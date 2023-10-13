@@ -32,6 +32,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateAutoTune -> onUpdateAutoTune(event.boolean)
             is EditImageEvent.UpdateColor -> onUpdateColor(event.colorMatrix)
             is EditImageEvent.UpdateAutoTuneBitmap -> onAutoTuneBitmap(event.imageBitmap)
+            is EditImageEvent.shouldShowCropOptions -> shouldShowCropOption(event.boolean)
         }
     }
 
@@ -74,6 +75,14 @@ class EditImageViewModel @Inject constructor(
             )
         }
     }
+
+    private fun shouldShowCropOption(boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                showCropOption = boolean
+            )
+        }
+    }
 }
 
 sealed interface EditImageEvent : Event {
@@ -86,5 +95,6 @@ sealed interface EditImageEvent : Event {
     data class UpdateColor(val colorMatrix: ColorMatrix): EditImageEvent
 
     data class UpdateAutoTuneBitmap(val imageBitmap: ImageBitmap): EditImageEvent
+    data class shouldShowCropOptions(val boolean: Boolean): EditImageEvent
 
 }

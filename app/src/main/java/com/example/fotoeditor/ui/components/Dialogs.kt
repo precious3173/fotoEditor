@@ -60,7 +60,7 @@ import java.io.InputStream
 @SuppressLint("SuspiciousIndentation")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun  TuneImageDialog(
+fun TuneImageDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
     onAdjustmentsChanged: (adjustments: ImageAdjustments) -> Unit,
