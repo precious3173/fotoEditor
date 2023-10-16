@@ -8,19 +8,24 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -30,20 +35,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.FilterColors.SelectFilter
@@ -329,6 +343,8 @@ private fun EditImageScreen(
 
 }
 
+
+
 @SuppressLint("SuspiciousIndentation")
 @Composable
 private fun EditImageContent(
@@ -339,44 +355,168 @@ private fun EditImageContent(
     showCropOption: Boolean
 ) {
 
+    val context = LocalContext.current
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var cropBoxSize by remember { mutableStateOf(200.dp) }
+    var cropBoxPosition by remember { mutableStateOf(Offset(0f, 0f)) }
+    var topLeftCorner by remember { mutableStateOf(Offset(0f, 0f)) }
+    var topRightCorner by remember { mutableStateOf(Offset(0f, 0f)) }
+    var bottomLeftCorner by remember { mutableStateOf(Offset(0f, 0f)) }
+    var bottomRightCorner by remember { mutableStateOf(Offset(0f, 0f)) }
+    var scale by remember { mutableStateOf(1f) }
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
+
+    var isCropping by remember { mutableStateOf(false) }
     var colorFilter = ColorFilter.colorMatrix(ColorMatrix(SelectFilter(index = 0)))
-     if (uiState.editColorMatrix != null){
+    val cropColor = if (isCropping) Color(0x80E4EEE4) else Color.Transparent
+
+    if (uiState.editColorMatrix != null) {
 
         colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix)
-     }
+    }
 
-         bitmap?.let {
-             Box(
-                 Modifier
-                     .fillMaxSize()
-                     .then(modifier)
-             ) {
-                Column (
-                    Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                ){
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.9f),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = colorFilter
-                    )
 
-                    if (uiState.showCropOption){
-                        CropSheet(crops = crops)
+
+    val cropBorderColor = Color.White
+
+    bitmap?.let {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .then(modifier)
+        ) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+//                Box(
+//                    modifier =
+//                    Modifier.fillMaxSize()
+//                        .weight(0.9f)
+//                        .background(Color.Black)
+//                ) {
+
+                        Box(
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+
+                                }
+
+
+                        ){
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                contentScale = ContentScale.Fit,
+                                colorFilter = colorFilter
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        scaleX = scale,
+                                        scaleY = scale,
+                                        translationX = offsetX,
+                                        translationY = offsetY
+                                    )
+                                    .pointerInput(Unit) {
+                                        detectTransformGestures { _, pan, _, _ ->
+                                            // Update offsetX and offsetY based on user's dragging
+                                            offsetX += pan.x
+                                            offsetY += pan.y
+                                        }
+                                    }
+                            ){
+                                Box(
+                                    modifier = Modifier
+                                        .size(cropBoxSize)
+                                        .background(Color.Black.copy(alpha = 0.6f))
+                                        .align(Alignment.Center)
+
+                                ) {
+                                    // Draw the corners of the crop box for resizing
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .offset(0.dp, 0.dp)
+                                            .background(Color.Red)
+                                            .pointerInput(Unit){
+                                                detectTransformGestures { _, pan, _, panChange ->
+                                                    cropBoxSize += (pan.x + pan.y).dp
+                                                }
+                                            }
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .offset(cropBoxSize - 16.dp, 0.dp)
+                                            .background(Color.Red)
+                                            .pointerInput(Unit) {
+                                                detectTransformGestures { _, pan, _, _ ->
+                                                    cropBoxSize += (pan.x - pan.y).dp
+
+                                                }
+                                            }
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .offset(0.dp, cropBoxSize - 16.dp)
+                                            .background(Color.Red)
+                                            .pointerInput(Unit) {
+                                                detectTransformGestures { _, pan, _, _ ->
+                                                    cropBoxSize += (pan.x - pan.y).dp
+
+                                                }
+                                            }
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .offset(cropBoxSize - 16.dp, cropBoxSize - 16.dp)
+                                            .background(Color.Red)
+                                            .pointerInput(Unit) {
+                                                detectTransformGestures { _, pan, _, _ ->
+                                                    cropBoxSize += (pan.x - pan.y).dp
+
+                                                }
+                                            }
+                                    )
+                                }
+                            }
+
+
+                        }
+
+//
+                    if (uiState.showCropOption) {
+                        CropSheet(crops = crops) {
+                            when (it.id) {
+                                1 -> {
+                                    Toast.makeText(context, "free crop", Toast.LENGTH_SHORT).show()
+                                    isCropping = true
+                                }
+                            }
+                        }
+
                     }
 
 
-             Spacer(modifier =Modifier.weight(0.1f) )
+                    Spacer(modifier = Modifier.weight(0.1f))
 
                 }
-             }
-             }
+
+            }
+
+        }
 
 
 //     else if (uiState.autoTuneBitmap != null){
@@ -427,7 +567,10 @@ private fun EditImageContent(
 //
 //    }
 //    }
-}
+
+
+    }
+
 
 
 @Composable
@@ -444,8 +587,4 @@ fun loadImageFromUri(context: Context, imageUri: Uri?): Bitmap? {
         }
       return null
 }
-
-
-
-
 

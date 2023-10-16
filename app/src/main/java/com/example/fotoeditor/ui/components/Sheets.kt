@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -174,7 +176,11 @@ private fun Scrim(
     }
 }
 @Composable
-fun CropSheet(crops: List<Crops> ) {
+fun CropSheet(
+    crops: List<Crops>,
+    onItemClick: (Crops) -> Unit
+    ) {
+
     val listState = rememberLazyListState()
     LazyRow(
         state = listState,
@@ -183,9 +189,19 @@ fun CropSheet(crops: List<Crops> ) {
     ) {
           items(crops){
              crop ->
-              Spacer(modifier = Modifier.width(10.dp))
-              CropItem(crops = crop, textColor = Color.Gray )
-              Spacer(modifier = Modifier.width(10.dp))
+              Box(modifier =
+              Modifier.selectable(
+                  selected = true,
+                  onClick = {
+                      onItemClick(crop)
+                  }
+              )){
+                  Spacer(modifier = Modifier.width(10.dp))
+                  CropItem(crops = crop, textColor = Color.Gray )
+                  Spacer(modifier = Modifier.width(10.dp))
+
+              }
+
           }
     }
 }
