@@ -4,6 +4,7 @@ package com.example.fotoeditor.ui.screens.homescreen
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ColorMatrix
 import com.example.fotoeditor.domain.models.ImageFilterState
 
@@ -31,5 +32,6 @@ data class HomeUiState(
     var savedImageBitmap: Bitmap? = null,
     var savedColorArray: FloatArray? = null,
     var savedImageUri: Uri? = null,
-    var savedColorMatrix: ColorMatrix? = null
+    var savedColorMatrix: ColorMatrix? = null,
+
 )

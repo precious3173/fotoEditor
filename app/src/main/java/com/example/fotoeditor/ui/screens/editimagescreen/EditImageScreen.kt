@@ -6,6 +6,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
 import android.view.View
@@ -13,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,16 +52,25 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
@@ -74,6 +86,7 @@ import com.example.fotoeditor.ui.utils.Crops
 import com.example.fotoeditor.ui.utils.CropsLibrary
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
+import java.io.File
 
 @SuppressLint("UseCompatLoadingForDrawables")
 @Composable
@@ -153,7 +166,8 @@ fun EditImageRoute(
 
                         EditImageBottomBar(
                             save = {
-                                IconButton(onClick = { navigator.navigateTo(Screen.HomeScreen.route)
+                                IconButton(onClick = {
+                                    //navigator.navigateTo(Screen.HomeScreen.route)
 
                                 accessStorage()
                                     homeScreenViewModel.onEvent(HomeScreenEvent.SendEditedUri)
@@ -164,7 +178,7 @@ fun EditImageRoute(
                                     } catch (e: Exception){
                                         e.stackTrace
                                     }
-
+                                    editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(true))
                                 }) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
@@ -326,9 +340,11 @@ private fun EditImageScreen(
 
                 EditImageContent(
                     bitmap = it.toBitmap(LocalContext.current),
+                    imageUri = it,
                     uiState = uiState,
                     crops = crops,
-                    showCropOption = showCropOption
+                    showCropOption = showCropOption,
+                    onEvent = onEvent
                 )
 
 
@@ -349,27 +365,33 @@ private fun EditImageScreen(
 @Composable
 private fun EditImageContent(
     bitmap: Bitmap?,
+    imageUri: Uri?,
     modifier: Modifier = Modifier,
     uiState: EditImageUiState,
     crops: List<Crops>,
-    showCropOption: Boolean
+    showCropOption: Boolean,
+    onEvent: (Event) -> Unit
 ) {
 
     val context = LocalContext.current
-    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var cropBoxSize by remember { mutableStateOf(200.dp) }
-    var cropBoxPosition by remember { mutableStateOf(Offset(0f, 0f)) }
-    var topLeftCorner by remember { mutableStateOf(Offset(0f, 0f)) }
-    var topRightCorner by remember { mutableStateOf(Offset(0f, 0f)) }
-    var bottomLeftCorner by remember { mutableStateOf(Offset(0f, 0f)) }
-    var bottomRightCorner by remember { mutableStateOf(Offset(0f, 0f)) }
+    val boxSize = 400.dp
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current.density
+    val screenWidthInPixels = (configuration.screenWidthDp * density).dp
+    val screenHeightInPixels = (configuration.screenHeightDp * density).dp
+
     var scale by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
 
+    var imageBitmap by remember {
+        mutableStateOf(bitmap)
+    }
+
     var isCropping by remember { mutableStateOf(false) }
     var colorFilter = ColorFilter.colorMatrix(ColorMatrix(SelectFilter(index = 0)))
-    val cropColor = if (isCropping) Color(0x80E4EEE4) else Color.Transparent
+
 
     if (uiState.editColorMatrix != null) {
 
@@ -380,7 +402,7 @@ private fun EditImageContent(
 
     val cropBorderColor = Color.White
 
-    bitmap?.let {
+    imageBitmap?.let {
         Box(
             Modifier
                 .fillMaxSize()
@@ -409,6 +431,9 @@ private fun EditImageContent(
 
 
                         ){
+
+
+
                             Image(
                                 bitmap = it.asImageBitmap(),
                                 contentDescription = null,
@@ -417,6 +442,8 @@ private fun EditImageContent(
                                 contentScale = ContentScale.Fit,
                                 colorFilter = colorFilter
                             )
+
+
 
                             Box(
                                 modifier = Modifier
@@ -438,7 +465,7 @@ private fun EditImageContent(
                                 Box(
                                     modifier = Modifier
                                         .size(cropBoxSize)
-                                        .background(Color.Black.copy(alpha = 0.6f))
+                                        .background(Color.White.copy(alpha = 0.6f))
                                         .align(Alignment.Center)
 
                                 ) {
@@ -447,10 +474,13 @@ private fun EditImageContent(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .offset(0.dp, 0.dp)
-                                            .background(Color.Red)
-                                            .pointerInput(Unit){
+                                            .background(Color.Black)
+                                            .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, panChange ->
-                                                    cropBoxSize += (pan.x + pan.y).dp
+                                                    cropBoxSize += (pan.x - pan.y).dp
+                                                    cropBoxSize =
+                                                        cropBoxSize.coerceIn(50.dp, 350.dp)
+
                                                 }
                                             }
                                     )
@@ -462,6 +492,8 @@ private fun EditImageContent(
                                             .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, _ ->
                                                     cropBoxSize += (pan.x - pan.y).dp
+                                                    cropBoxSize =
+                                                        cropBoxSize.coerceIn(50.dp, 350.dp)
 
                                                 }
                                             }
@@ -470,11 +502,13 @@ private fun EditImageContent(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .offset(0.dp, cropBoxSize - 16.dp)
-                                            .background(Color.Red)
+                                            .background(Color.Yellow)
                                             .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, _ ->
-                                                    cropBoxSize += (pan.x - pan.y).dp
 
+                                                    cropBoxSize += (pan.x + pan.y).dp
+                                                    cropBoxSize =
+                                                        cropBoxSize.coerceIn(50.dp, 350.dp)
                                                 }
                                             }
                                     )
@@ -482,21 +516,25 @@ private fun EditImageContent(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .offset(cropBoxSize - 16.dp, cropBoxSize - 16.dp)
-                                            .background(Color.Red)
+                                            .background(Color.Green)
                                             .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, _ ->
-                                                    cropBoxSize += (pan.x - pan.y).dp
-
+                                                    cropBoxSize += (pan.x + pan.y).dp
+                                                    cropBoxSize =
+                                                        cropBoxSize.coerceIn(10.dp, 350.dp)
                                                 }
                                             }
                                     )
+
+
+
                                 }
                             }
 
 
                         }
 
-//
+
                     if (uiState.showCropOption) {
                         CropSheet(crops = crops) {
                             when (it.id) {
@@ -512,6 +550,15 @@ private fun EditImageContent(
 
                     Spacer(modifier = Modifier.weight(0.1f))
 
+                if (uiState.isBitmapCropped) {
+
+                  val croppedBitmap =  CropAndConvertToBitmap(imageUri,it,density,boxSize, cropBoxSize)
+
+                        imageBitmap = croppedBitmap
+                        onEvent(HomeScreenEvent.SendCroppedBitmap(croppedBitmap))
+                        Toast.makeText(context, "Cropped Bitmap: $croppedBitmap", Toast.LENGTH_SHORT).show()
+
+                }
                 }
 
             }
@@ -570,6 +617,91 @@ private fun EditImageContent(
 
 
     }
+
+@Composable
+fun CropAndConvertToBitmap(imageUri: Uri?, bitmap: Bitmap?,density: Float, boxSize: Dp, cropBoxSize: Dp): Bitmap {
+           val context = LocalContext.current
+
+//    val photoBitmap= bitmap!!.asImageBitmap()
+    // Calculate the crop boundaries
+    val cropLeft = (cropBoxSize / 2).coerceAtLeast(0.dp)
+    val cropTop = (cropBoxSize / 2).coerceAtLeast(0.dp)
+    val cropRight = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
+    val cropBottom = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
+
+
+   val photoBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
+   photoBitmap.asImageBitmap()
+
+
+    val croppedBitmap =Bitmap.createBitmap(
+        ((cropRight - cropLeft).value * density).toInt(),
+        ((cropBottom - cropTop).value * density).toInt(),
+        Bitmap.Config.ARGB_8888
+    )
+
+    val srcRect: android.graphics.Rect? = Rect(
+        (cropLeft * density).value.toInt(),
+        (cropTop * density).value.toInt(),
+        (cropRight * density).value.toInt(),
+        (cropBottom * density).value.toInt()
+    )
+    val destRect = Rect(0, 0, (croppedBitmap.width), (croppedBitmap.height))
+
+
+    val canvas = android.graphics.Canvas(croppedBitmap)
+    canvas.drawBitmap(photoBitmap, srcRect, destRect, null)
+
+    return croppedBitmap
+
+//
+//    Canvas(
+//        modifier = Modifier
+//            .background(Color.White)
+//            .fillMaxSize()
+//    ) {
+//        drawIntoCanvas { canvas ->
+//            // Calculate the scale factor to convert Dp to pixels
+//            val density = density
+//
+//            // Draw the cropped portion of the source bitmap onto the canvas
+//            canvas.nativeCanvas.drawBitmap(
+//                photoBitmap.asAndroidBitmap(),
+//                srcRect = srcRect,
+//                destRect = destRect,
+//                null
+//            )
+//
+//        }
+//    }
+
+    // Calculate crop coordinates
+//    val cropLeft = (cropBoxSize / 2).coerceAtLeast(0.dp)
+//    val cropTop = (cropBoxSize / 2).coerceAtLeast(0.dp)
+//    val cropRight = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
+//    val cropBottom = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
+
+//    // Calculate the width and height of the cropped area
+//    val croppedWidth = (cropRight - cropLeft).value.toInt()
+//    val croppedHeight = (cropBottom - cropTop).value
+//
+//    val scale = (photoBitmap.width / croppedWidth)
+//
+//    val painter = remember {
+//        BitmapPainter(
+//             image = photoBitmap ,
+//            srcOffset = IntOffset((cropLeft * scale).value.toInt(), (cropTop * scale).value.toInt()),
+//            srcSize = IntSize(photoBitmap.width.toInt() / scale, photoBitmap.height / scale)
+//        )
+//    }
+
+
+
+}
+
+
+
+
 
 
 
