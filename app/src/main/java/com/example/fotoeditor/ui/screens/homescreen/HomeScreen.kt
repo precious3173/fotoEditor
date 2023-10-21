@@ -100,6 +100,8 @@ import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.screens.Settings.ThemeManager
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageUiState
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -112,10 +114,12 @@ import kotlin.Exception
 @SuppressLint("Recycle", "IntentReset")
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
+fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel, editImageViewModel: EditImageViewModel) {
     val context = LocalContext.current
     var backgroundColor: Color? = null
     var textColor: Color? = null
+
+    val editScreenUiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
 
     val themeManager = ThemeManager(LocalContext.current)
     val isDarkTheme by remember { mutableStateOf(themeManager.getSelectedTheme() == ThemeManager.THEME_DARK) }
@@ -278,7 +282,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     isDarkTheme = isDarkTheme,
                     shouldExpandTools = uiState.shouldExpandTools,
                     backgroundColor = backgroundColor,
-                    uiState = uiState
+                    uiState = uiState,
+                    editUiState = editScreenUiState
 
                     )
             },
@@ -630,7 +635,8 @@ private fun HomeScreen(
     isDarkTheme: Boolean,
     shouldExpandTools: Boolean,
     backgroundColor: Color,
-    uiState: HomeUiState
+    uiState: HomeUiState,
+    editUiState: EditImageUiState
 
 ) {
     val offset = 20
@@ -680,7 +686,8 @@ private fun HomeScreen(
             shouldExpandTools = shouldExpandTools,
             navigator = navigator,
             backgroundColor = backgroundColor,
-            uiState = uiState
+            uiState = uiState,
+            editUiState = editUiState
         )
     }
 }
@@ -705,18 +712,22 @@ private fun HomeScreenContent(
     shouldExpandTools: Boolean,
      navigator: Navigator,
     backgroundColor: Color,
-    uiState: HomeUiState
+    uiState: HomeUiState,
+    editUiState: EditImageUiState
 
 
 ) {
     AnimatedContent(hasPhotoImported, label = "ImportedPhotoAnimation") { targetState ->
        var bitmap: Bitmap? = null
+
         var savedColorMatrix: ColorMatrix =  ColorMatrix(SelectFilter(selectedFilter!!))
 
        if (importedImageUri !=null){
                bitmap= importedImageUri.toBitmap(LocalContext.current)
 
        }
+
+
 
         try {
             if (uiState.savedColorMatrix != null) savedColorMatrix = uiState.savedColorMatrix!!
@@ -771,6 +782,14 @@ private fun HomeScreenContent(
                 val context = LocalContext.current
 
 
+                if (editUiState.croppedImageUri !=null){
+                    uiState.importedImageUri = editUiState.croppedImageUri
+                    Toast.makeText(context, "yeah yeah yeah", Toast.LENGTH_SHORT).show()
+
+                }
+                else{
+                    Toast.makeText(context, "Nah nah nah", Toast.LENGTH_SHORT).show()
+                }
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
 
                     Column(
@@ -780,10 +799,10 @@ private fun HomeScreenContent(
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         //the preview
-                        importedImageUri?.let {
+//                        importedImageUri?.let {
 
                             AsyncImage(
-                                model = it,
+                                model = importedImageUri,
                                 contentDescription = null,
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
@@ -794,7 +813,7 @@ private fun HomeScreenContent(
 //                                    ColorMatrix(SelectFilter(selectedFilter!!))
                                 )
                             )
-                        }
+//                        }
                         //isVisible
                    if (isVisible){
 

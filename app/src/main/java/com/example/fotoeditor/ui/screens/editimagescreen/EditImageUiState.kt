@@ -14,5 +14,7 @@ data class EditImageUiState(
     var isAutoTuneDialogVisible:Boolean = false,
     var autoTuneBitmap: ImageBitmap?= null,
     var showCropOption: Boolean = false,
-    var isBitmapCropped: Boolean = false
+    var isBitmapCropped: Boolean = false,
+    var isFreeCrop: Boolean = false,
+    var croppedImageUri: Uri? = null
 )

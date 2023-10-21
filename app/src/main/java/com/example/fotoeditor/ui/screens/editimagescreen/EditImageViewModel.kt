@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
+import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.EventHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +35,8 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateAutoTuneBitmap -> onAutoTuneBitmap(event.imageBitmap)
             is EditImageEvent.shouldShowCropOptions -> shouldShowCropOption(event.boolean)
             is EditImageEvent.ShouldSendCropped -> shouldSendCroppedBitmap(event.boolean)
+            is EditImageEvent.FreeCropActivated -> freeCropActivated(event.boolean)
+            is EditImageEvent.SendCroppedImage -> sendCroppedImage(event.croppedImage)
         }
     }
 
@@ -92,6 +95,22 @@ class EditImageViewModel @Inject constructor(
             )
         }
     }
+
+    private fun freeCropActivated(boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                isFreeCrop = boolean
+            )
+        }
+    }
+
+    private fun sendCroppedImage(croppedImage:Uri?){
+        _uiState.update {
+            it.copy(
+                croppedImageUri = croppedImage
+            )
+        }
+    }
 }
 
 sealed interface EditImageEvent : Event {
@@ -106,5 +125,6 @@ sealed interface EditImageEvent : Event {
     data class UpdateAutoTuneBitmap(val imageBitmap: ImageBitmap): EditImageEvent
     data class shouldShowCropOptions(val boolean: Boolean): EditImageEvent
     data class ShouldSendCropped(val boolean: Boolean): EditImageEvent
-
+    data class FreeCropActivated(val boolean: Boolean): EditImageEvent
+    data class SendCroppedImage(val croppedImage: Uri?): EditImageEvent
 }
