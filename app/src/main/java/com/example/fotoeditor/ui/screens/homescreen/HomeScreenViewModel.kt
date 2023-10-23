@@ -84,6 +84,7 @@ class HomeScreenViewModel @Inject constructor(
             is HomeScreenEvent.UpdateFilterIndex -> updateFilterIndex(event.index)
             is HomeScreenEvent.EditImageColorMatrix -> EditImageColorMatrix(event.colorMatrix)
             is HomeScreenEvent.updateEditColorFilterArray -> updateEditColorFilterArray(event.colorArray, event.imageUri, event.bitmap)
+            is HomeScreenEvent.UpdateCroppedUri -> updateCroppedUri(event.uri)
 
 
         }
@@ -489,6 +490,14 @@ class HomeScreenViewModel @Inject constructor(
         }.getOrDefault(originalImage)
     }
 
+    private fun updateCroppedUri(uri: Uri?){
+        _uiState.update {
+            it.copy(
+                savedImageUri = uri
+            )
+        }
+    }
+
 
 }
 
@@ -536,7 +545,7 @@ sealed interface HomeScreenEvent : Event {
     data class EditImageColorMatrix(val colorMatrix: ColorMatrix): HomeScreenEvent
 
     data class updateEditColorFilterArray(val colorArray: FloatArray, val imageUri: Uri, val bitmap: Bitmap?): HomeScreenEvent
-
+    data class UpdateCroppedUri(val uri: Uri?):HomeScreenEvent
 
 
 }

@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -76,11 +75,11 @@ import com.example.fotoeditor.ui.utils.Crops
 import com.example.fotoeditor.ui.utils.CropsLibrary
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 @SuppressLint("UseCompatLoadingForDrawables", "SuspiciousIndentation")
 @Composable
@@ -144,7 +143,8 @@ fun EditImageRoute(
                      uiState = uiState,
                      crops = CropsLibrary.crops,
                      showCropOption = showCropOption,
-                     onHomeEvent = homeScreenViewModel::onEvent
+                     onHomeEvent = homeScreenViewModel::onEvent,
+                     homeScreenViewModel = homeScreenViewModel
 
                  )
 
@@ -165,9 +165,10 @@ fun EditImageRoute(
                                     navigator.navigateTo(Screen.HomeScreen.route)
 
                                     coroutineScope.launch {
-
+                                        editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(false))
                                         delay(4000)
                                         editImageViewModel.onEvent(EditImageEvent.FreeCropActivated(false))
+
                                     }
 
 
@@ -180,7 +181,9 @@ fun EditImageRoute(
                                     } catch (e: Exception){
                                         e.stackTrace
                                     }
-                                    editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(true))
+
+
+//                                    uiState.isBitmapCropped = !uiState.isBitmapCropped
                                 }) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
@@ -327,6 +330,7 @@ private fun EditImageScreen(
     uiState: EditImageUiState,
     crops: List<Crops>,
     showCropOption: Boolean,
+    homeScreenViewModel: HomeScreenViewModel
 ) {
     val TAG = "EditImage"
     Box(
@@ -348,7 +352,8 @@ private fun EditImageScreen(
                     crops = crops,
                     showCropOption = showCropOption,
                     onEvent = onEvent,
-                    onHomeEvent = onHomeEvent
+                    onHomeEvent = onHomeEvent,
+                    homeScreenViewModel = homeScreenViewModel
                 )
 
 
@@ -372,6 +377,7 @@ private fun EditImageContent(
     imageUri: Uri?,
     modifier: Modifier = Modifier,
     uiState: EditImageUiState,
+    homeScreenViewModel: HomeScreenViewModel,
     crops: List<Crops>,
     showCropOption: Boolean,
     onEvent: (Event) -> Unit,
@@ -393,7 +399,8 @@ private fun EditImageContent(
     var offsetY by remember { mutableStateOf(0f) }
 
     val cropBoxSizeDimension= getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(configuration, density)
-    var croppedImageUri by remember { mutableStateOf<Uri?>(imageUri) }
+    var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     var croppedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     var cropBoxSize by remember { mutableStateOf(cropBoxSizeDimension) }
@@ -403,7 +410,7 @@ private fun EditImageContent(
 
     var isCropping by remember { mutableStateOf(false) }
     var colorFilter = ColorFilter.colorMatrix(ColorMatrix(SelectFilter(index = 0)))
-
+    croppedImageUri = imageUri
 
 
     if (uiState.editColorMatrix != null) {
@@ -445,7 +452,9 @@ private fun EditImageContent(
 
                         ){
 
+
                             onEvent(EditImageEvent.SendCroppedImage(croppedImageUri))
+
 
                             AsyncImage(
                                 model = croppedImageUri,
@@ -475,6 +484,10 @@ private fun EditImageContent(
                                             }
                                         }
                                 ){
+                                    val maxCropBoxSize = min(
+                                        imageBitmap?.width?.toFloat() ?: 0f,
+                                        imageBitmap?.height?.toFloat() ?: 0f
+                                    )
                                     Box(
                                         modifier = Modifier
                                             .size(cropBoxSize)
@@ -496,10 +509,7 @@ private fun EditImageContent(
                                                                 getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
                                                                     configuration, density
                                                                 ),
-                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
-                                                                    it.asImageBitmap(),
-                                                                    density
-                                                                )
+                                                                maxCropBoxSize.dp
                                                             )
 
                                                     }
@@ -518,10 +528,7 @@ private fun EditImageContent(
                                                                 getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
                                                                     configuration, density
                                                                 ),
-                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
-                                                                    it.asImageBitmap(),
-                                                                    density
-                                                                )
+                                                                maxCropBoxSize.dp
                                                             )
 
                                                     }
@@ -541,10 +548,7 @@ private fun EditImageContent(
                                                                 getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
                                                                     configuration, density
                                                                 ),
-                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
-                                                                    it.asImageBitmap(),
-                                                                    density
-                                                                )
+                                                                maxCropBoxSize.dp
                                                             )
                                                     }
                                                 }
@@ -562,15 +566,28 @@ private fun EditImageContent(
                                                                 getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
                                                                     configuration, density
                                                                 ),
-                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
-                                                                    it.asImageBitmap(),
-                                                                    density
-                                                                )
+                                                                maxCropBoxSize.dp
+//                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
+//                                                                    it.asImageBitmap(),
+//                                                                    density
+//                                                                )
                                                             )
                                                     }
                                                 }
                                         )
 
+
+                                         SendUri(
+                                             imageUri = imageUri,
+                                             offsetY = offsetY,
+                                             offsetX = offsetX,
+                                             cropBoxSize = cropBoxSize,
+                                             context = context,
+                                             density = density,
+                                             croppedImageUri = croppedImageUri,
+                                             onHomeEvent = onHomeEvent,
+                                             homeScreenViewModel = homeScreenViewModel
+                                         )
 
 
                                     }
@@ -589,6 +606,7 @@ private fun EditImageContent(
                                 1 -> {
                                     Toast.makeText(context, "free crop", Toast.LENGTH_SHORT).show()
                                     onEvent(EditImageEvent.FreeCropActivated(true))
+                                    onEvent(EditImageEvent.ShouldSendCropped(true))
                                 }
                             }
                         }
@@ -600,33 +618,6 @@ private fun EditImageContent(
 
                 if (uiState.isBitmapCropped) {
 
-
-                    // Function to crop the image
-
-                        val bitmap = loadCroppedImageFromUri(imageUri, context)
-                        val offsetXPixels = (offsetX * density).toInt()
-                        val offsetYPixels = (offsetY * density).toInt()
-                        val cropBoxSizePixels = (cropBoxSize.value * density).toInt()
-
-                        val croppedBitmap = cropBitmap(
-                            bitmap = bitmap,
-                            offsetX = offsetXPixels,
-                            offsetY = offsetYPixels,
-                            cropSize = cropBoxSizePixels
-                        )
-                        croppedImageUri = bitmapToUri(context, croppedBitmap, onHomeEvent)
-
-
-
-
-
-//                  val croppedBitmap =  CropAndConvertToBitmap(imageUri,it,density,boxSize, cropBoxSize, offsetX, offsetY, onEvent)
-
-//                        imageBitmap = croppedBitmap
-//                    val croppedImageUri = bitmapToUri(context = context, bitmap = croppedBitmap)
-
-
-                        Toast.makeText(context, "Cropped Uri: $croppedImageUri", Toast.LENGTH_SHORT).show()
 
                 }
                 }
@@ -688,6 +679,41 @@ private fun EditImageContent(
 
 
     }
+
+@Composable
+fun SendUri(imageUri: Uri?, offsetY: Float, offsetX: Float, cropBoxSize: Dp, density: Float, context: Context, croppedImageUri: Uri?, onHomeEvent: (Event) -> Unit, homeScreenViewModel: HomeScreenViewModel) {
+
+    // Function to crop the image
+
+    val bitmap = loadCroppedImageFromUri(imageUri, context)
+    val offsetXPixels = (offsetX * density).toInt()
+    val offsetYPixels = (offsetY * density).toInt()
+    val cropBoxSizePixels = (cropBoxSize.value * density).toInt()
+
+    val croppedBitmap = cropBitmap(
+        bitmap = bitmap,
+        offsetX = offsetXPixels,
+        offsetY = offsetYPixels,
+        cropSize = cropBoxSizePixels
+    )
+
+
+    croppedImageUri = bitmapToUri(context, croppedBitmap, onHomeEvent)
+
+
+    val selectFilters: FloatArray =   SelectFilter(
+        index = 0 )
+
+    homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(selectFilters , croppedImageUri!!, bitmap))
+//                  val croppedBitmap =  CropAndConvertToBitmap(imageUri,it,density,boxSize, cropBoxSize, offsetX, offsetY, onEvent)
+
+//                        imageBitmap = croppedBitmap
+//                    val croppedImageUri = bitmapToUri(context = context, bitmap = croppedBitmap)
+
+
+    Toast.makeText(context, "Cropped Uri: $croppedImageUri", Toast.LENGTH_SHORT).show()
+
+}
 
 fun loadCroppedImageFromUri(imageUri: Uri?, context: Context): Bitmap? {
     val contentResolver = context.contentResolver

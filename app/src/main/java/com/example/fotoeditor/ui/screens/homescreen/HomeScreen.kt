@@ -799,10 +799,10 @@ private fun HomeScreenContent(
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         //the preview
-//                        importedImageUri?.let {
+                      importedImageUri?.let {
 
                             AsyncImage(
-                                model = importedImageUri,
+                                model = it,
                                 contentDescription = null,
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
@@ -813,7 +813,7 @@ private fun HomeScreenContent(
 //                                    ColorMatrix(SelectFilter(selectedFilter!!))
                                 )
                             )
-//                        }
+                        }
                         //isVisible
                    if (isVisible){
 
