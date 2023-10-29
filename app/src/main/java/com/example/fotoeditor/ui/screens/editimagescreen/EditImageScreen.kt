@@ -18,6 +18,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -87,6 +89,7 @@ import com.example.fotoeditor.ui.utils.CropsLibrary
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
 import java.io.File
+import kotlin.math.roundToInt
 
 @SuppressLint("UseCompatLoadingForDrawables")
 @Composable
@@ -374,8 +377,9 @@ private fun EditImageContent(
 ) {
 
     val context = LocalContext.current
-    var cropBoxSize by remember { mutableStateOf(200.dp) }
+    var cropBoxSize by remember { mutableStateOf(Pair(400f, 400f)) }
     val boxSize = 400.dp
+
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current.density
     val screenWidthInPixels = (configuration.screenWidthDp * density).dp
@@ -385,10 +389,22 @@ private fun EditImageContent(
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
 
+    var cropBoxPosition by remember { mutableStateOf(Pair(0f, 0f)) }
+
     var imageBitmap by remember {
         mutableStateOf(bitmap)
     }
 
+    // Get the image's dimensions
+    val imageWidth = imageBitmap?.width ?: 400f
+    val imageHeight = imageBitmap?.height ?: 400f
+
+
+// Set the maximum crop box size based on the image dimensions
+    val maxCropBoxSize = Pair(imageBitmap?.width?.toFloat() ?: 200f, imageBitmap?.height?.toFloat() ?: 200f)
+
+
+    var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isCropping by remember { mutableStateOf(false) }
     var colorFilter = ColorFilter.colorMatrix(ColorMatrix(SelectFilter(index = 0)))
 
@@ -425,9 +441,6 @@ private fun EditImageContent(
                             modifier = Modifier
                                 .weight(0.9f)
                                 .fillMaxSize()
-                                .pointerInput(Unit) {
-
-                                }
 
 
                         ){
@@ -438,7 +451,14 @@ private fun EditImageContent(
                                 bitmap = it.asImageBitmap(),
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .fillMaxSize(),
+                                    .height(400.dp)
+                                    .width(400.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                        translationX = offsetX
+                                        translationY = offsetY
+                                    },
                                 contentScale = ContentScale.Fit,
                                 colorFilter = colorFilter
                             )
@@ -447,29 +467,37 @@ private fun EditImageContent(
 
                             Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer(
-                                        scaleX = scale,
-                                        scaleY = scale,
-                                        translationX = offsetX,
-                                        translationY = offsetY
-                                    )
+                                    .size(cropBoxSize.first.dp, cropBoxSize.second.dp)
+                                    .offset{
+                                        IntOffset(cropBoxPosition.first.roundToInt(),
+                                            cropBoxPosition.second.roundToInt())
+                                    }
                                     .pointerInput(Unit) {
-                                        detectTransformGestures { _, pan, _, _ ->
-                                            // Update offsetX and offsetY based on user's dragging
-                                            offsetX += pan.x
-                                            offsetY += pan.y
+                                        detectTransformGestures { _, pan, zoom, _ ->
+                                            // // Update crop box size based on user's input
+                                            cropBoxSize = Pair(cropBoxSize.first + pan.x, cropBoxSize.second + pan.y)
+
+
+// Ensure that the crop box size stays within image boundaries
+                                            cropBoxSize = Pair(
+                                                cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                            )
+
                                         }
                                     }
                             ){
                                 Box(
                                     modifier = Modifier
-                                        .size(cropBoxSize)
+                                        .fillMaxSize()
+                                        .border(width = 1.dp, color = Color.White)
                                         .background(Color.White.copy(alpha = 0.6f))
                                         .align(Alignment.Center)
 
                                 ) {
                                     // Draw the corners of the crop box for resizing
+
+                                    val cornerSize = 16.dp
                                     Box(
                                         modifier = Modifier
                                             .size(16.dp)
@@ -477,9 +505,14 @@ private fun EditImageContent(
                                             .background(Color.Black)
                                             .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, panChange ->
-                                                    cropBoxSize += (pan.x - pan.y).dp
-                                                    cropBoxSize =
-                                                        cropBoxSize.coerceIn(50.dp, 350.dp)
+                                                    cropBoxSize = Pair(cropBoxSize.first - pan.x, cropBoxSize.second - pan.y)
+                                                    cropBoxPosition = Pair(cropBoxPosition.first + pan.x, cropBoxPosition.second + pan.y)
+// Ensure corner resizing handles don't exceed image boundaries
+                                                    cropBoxSize = Pair(
+                                                        cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                        cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                    )
+
 
                                                 }
                                             }
@@ -487,7 +520,7 @@ private fun EditImageContent(
                                     Box(
                                         modifier = Modifier
                                             .size(16.dp)
-                                            .offset(cropBoxSize - 16.dp, 0.dp)
+                                            .offset(cropBoxSize. 16.dp, 0.dp)
                                             .background(Color.Red)
                                             .pointerInput(Unit) {
                                                 detectTransformGestures { _, pan, _, _ ->
