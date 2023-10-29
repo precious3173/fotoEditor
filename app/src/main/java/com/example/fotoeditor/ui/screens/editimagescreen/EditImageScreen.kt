@@ -7,7 +7,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -15,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -23,10 +23,12 @@ import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -44,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -57,7 +60,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -82,186 +84,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
-@SuppressLint("UseCompatLoadingForDrawables", "SuspiciousIndentation")
-@Composable
-fun EditImageRoute(
-    toolId: String?,
-    homeScreenViewModel: HomeScreenViewModel,
-    editImageViewModel: EditImageViewModel,
-    navigator: Navigator
-) {
-    val TAG = "EditImage"
-    val uiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
-    val homeScreenUiState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
-    val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "AnimatedProgress")
-    var showCropOption by remember { mutableStateOf( false)}
-
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-
-            if (isGranted) {
-                Log.d(ContentValues.TAG, "Access granted")
-            } else {
-                Log.d(ContentValues.TAG, "Access  not granted")
-            }
-        }
-
-    val accessStorage: () -> Unit = {
-        homeScreenViewModel.onEvent(HomeScreenEvent.AccessStorage{
-                hasPermission ->
-            if(hasPermission){
-                Log.d(ContentValues.TAG, "Access granted")
-                // Toast.makeText(context, "Access granted", Toast.LENGTH_SHORT).show()
-            }
-            else{
-                launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                Log.d(ContentValues.TAG, "Access not granted")
-            }
-        })
-
-    }
-
-    toolId?.let {
-        LaunchedEffect(Unit) {
-            editImageViewModel.onEvent(EditImageEvent.UpdateToolId(it.toInt()))
-            editImageViewModel.onEvent(EditImageEvent.UpdateImagePreview(homeScreenUiState.importedImageUri))
-        }
-    }
-
-
-
-    Scaffold(
-        topBar = {
-            //PhotoEditProgressIndicator(progress = animatedProgress)
-                 },
-        content = {
-
-                 EditImageScreen(
-                     imageUri = uiState.imagePreview,
-                     modifier = Modifier.padding(it),
-                     onEvent = editImageViewModel::onEvent,
-                     isTuneDialogVisible = uiState.isTuneDialogVisible,
-                     uiState = uiState,
-                     crops = CropsLibrary.crops,
-                     showCropOption = showCropOption,
-                     onHomeEvent = homeScreenViewModel::onEvent,
-                     homeScreenViewModel = homeScreenViewModel
-
-                 )
-
-
-
-
-        },
-        bottomBar = {
-            Box(
-                Modifier
-                    .background(Color.White)
-                    .shadow(elevation = 1.dp)
-            ) {
-                     val coroutineScope = rememberCoroutineScope()
-                        EditImageBottomBar(
-                            save = {
-                                IconButton(onClick = {
-                                    navigator.navigateTo(Screen.HomeScreen.route)
-
-                                    coroutineScope.launch {
-                                        editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(false))
-                                        delay(4000)
-                                        editImageViewModel.onEvent(EditImageEvent.FreeCropActivated(false))
-
-                                    }
-
-
-                                accessStorage()
-                                    homeScreenViewModel.onEvent(HomeScreenEvent.SendEditedUri)
-                                    try {
-                                        homeScreenViewModel.onEvent(HomeScreenEvent.EditImageColorMatrix(
-                                            uiState.editColorMatrix!!
-                                        ))
-                                    } catch (e: Exception){
-                                        e.stackTrace
-                                    }
-
-
-//                                    uiState.isBitmapCropped = !uiState.isBitmapCropped
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color.Gray,
-
-                                    )
-                                }
-                            },
-                            abort = {
-                                IconButton(onClick = {
-                               navigator.navigateTo(Screen.HomeScreen.route)
-
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = null,
-                                        tint = Color.Gray,
-                                    )
-                                }
-                            },
-                            content = {
-                                EditImageMode(
-                                    selectToolId = uiState.selectedToolId,
-                                    onEvent = editImageViewModel::onEvent,
-                                    showCropOption = showCropOption,
-                                    uiState = uiState
-                                    )
-
-
-                            }
-                        )
-
-            }
-        },
-
-    )
-
-
-    if (uiState.isTuneDialogVisible){
-        val context = LocalContext.current
-        val imageUri = uiState.imagePreview!!
-        val bitmap = imageUri.toBitmap(LocalContext.current)
-   TuneImageDialog(
-       visible = uiState.isTuneDialogVisible,
-       onDismiss = {
-           editImageViewModel.onEvent(EditImageEvent.UpdateTune(false))
-       },
-       onAdjustmentsChanged = { adjustments ->
-           // Handle adjustments here
-           println("Adjustments: $adjustments")
-       },
-       onEvent = editImageViewModel::onEvent,
-       homeScreenViewModel = homeScreenViewModel,
-       imageUri = imageUri,
-       bitmap = bitmap!!
-
-   )
-    }
-
-    if (uiState.isAutoTuneDialogVisible){
-        val context = LocalContext.current
-        val imageUri = uiState.imagePreview!!
-        val bitmap = imageUri.toBitmap(LocalContext.current)
-        val imageBitmap= loadImageFromUri(context = context, imageUri = imageUri )
-
-
-        val adjustedImageBitmap = autoTuneImage(1.2f, 1.2f, 0.8f, homeScreenViewModel, imageUri = imageUri, bitmap = bitmap!!)
-//         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
-        if (adjustedImageBitmap != null) {
-            editImageViewModel.onEvent(EditImageEvent.UpdateColor(adjustedImageBitmap))
-        }
-
-    }
-}
 
 @Composable
 fun EditImageMode(
@@ -272,6 +98,184 @@ fun EditImageMode(
 ) {
     when(selectToolId){
         1 -> {
+            @SuppressLint("UseCompatLoadingForDrawables", "SuspiciousIndentation")
+            @Composable
+            fun EditImageRoute(
+                toolId: String?,
+                homeScreenViewModel: HomeScreenViewModel,
+                editImageViewModel: EditImageViewModel,
+                navigator: Navigator
+            ) {
+                val TAG = "EditImage"
+                val uiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
+                val homeScreenUiState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
+                val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "AnimatedProgress")
+                var showCropOption by remember { mutableStateOf( false)}
+
+                val launcher =
+                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+
+                        if (isGranted) {
+                            Log.d(ContentValues.TAG, "Access granted")
+                        } else {
+                            Log.d(ContentValues.TAG, "Access  not granted")
+                        }
+                    }
+
+                val accessStorage: () -> Unit = {
+                    homeScreenViewModel.onEvent(HomeScreenEvent.AccessStorage{
+                            hasPermission ->
+                        if(hasPermission){
+                            Log.d(ContentValues.TAG, "Access granted")
+                            // Toast.makeText(context, "Access granted", Toast.LENGTH_SHORT).show()
+                        }
+                        else{
+                            launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            Log.d(ContentValues.TAG, "Access not granted")
+                        }
+                    })
+
+                }
+
+                toolId?.let {
+                    LaunchedEffect(Unit) {
+                        editImageViewModel.onEvent(EditImageEvent.UpdateToolId(it.toInt()))
+                        editImageViewModel.onEvent(EditImageEvent.UpdateImagePreview(homeScreenUiState.importedImageUri))
+                    }
+                }
+
+
+
+                Scaffold(
+                    topBar = {
+                        //PhotoEditProgressIndicator(progress = animatedProgress)
+                    },
+                    content = {
+
+                        EditImageScreen(
+                            imageUri = uiState.imagePreview,
+                            modifier = Modifier.padding(it),
+                            onEvent = editImageViewModel::onEvent,
+                            isTuneDialogVisible = uiState.isTuneDialogVisible,
+                            uiState = uiState,
+                            crops = CropsLibrary.crops,
+                            showCropOption = showCropOption,
+                            onHomeEvent = homeScreenViewModel::onEvent,
+                            homeScreenViewModel = homeScreenViewModel
+
+                        )
+
+
+
+
+                    },
+                    bottomBar = {
+                        Box(
+                            Modifier
+                                .background(Color.White)
+                                .shadow(elevation = 1.dp)
+                        ) {
+                            val coroutineScope = rememberCoroutineScope()
+                            EditImageBottomBar(
+                                save = {
+                                    IconButton(onClick = {
+                                        navigator.navigateTo(Screen.HomeScreen.route)
+
+                                        coroutineScope.launch {
+                                            editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(false))
+                                            delay(4000)
+                                            editImageViewModel.onEvent(EditImageEvent.FreeCropActivated(false))
+
+                                        }
+
+
+                                        accessStorage()
+                                        homeScreenViewModel.onEvent(HomeScreenEvent.SendEditedUri)
+                                        try {
+                                            homeScreenViewModel.onEvent(HomeScreenEvent.EditImageColorMatrix(
+                                                uiState.editColorMatrix!!
+                                            ))
+                                        } catch (e: Exception){
+                                            e.stackTrace
+                                        }
+
+
+//                                    uiState.isBitmapCropped = !uiState.isBitmapCropped
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.Gray,
+
+                                            )
+                                    }
+                                },
+                                abort = {
+                                    IconButton(onClick = {
+                                        navigator.navigateTo(Screen.HomeScreen.route)
+
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = null,
+                                            tint = Color.Gray,
+                                        )
+                                    }
+                                },
+                                content = {
+                                    EditImageMode(
+                                        selectToolId = uiState.selectedToolId,
+                                        onEvent = editImageViewModel::onEvent,
+                                        showCropOption = showCropOption,
+                                        uiState = uiState
+                                    )
+
+
+                                }
+                            )
+
+                        }
+                    },
+
+                    )
+
+
+                if (uiState.isTuneDialogVisible){
+                    val context = LocalContext.current
+                    val imageUri = uiState.imagePreview!!
+                    val bitmap = imageUri.toBitmap(LocalContext.current)
+                    TuneImageDialog(
+                        visible = uiState.isTuneDialogVisible,
+                        onDismiss = {
+                            editImageViewModel.onEvent(EditImageEvent.UpdateTune(false))
+                        },
+                        onAdjustmentsChanged = { adjustments ->
+                            // Handle adjustments here
+                            println("Adjustments: $adjustments")
+                        },
+                        onEvent = editImageViewModel::onEvent,
+                        homeScreenViewModel = homeScreenViewModel,
+                        imageUri = imageUri,
+                        bitmap = bitmap!!
+
+                    )
+                }
+
+                if (uiState.isAutoTuneDialogVisible){
+                    val context = LocalContext.current
+                    val imageUri = uiState.imagePreview!!
+                    val bitmap = imageUri.toBitmap(LocalContext.current)
+                    val imageBitmap= loadImageFromUri(context = context, imageUri = imageUri )
+
+
+                    val adjustedImageBitmap = autoTuneImage(1.2f, 1.2f, 0.8f, homeScreenViewModel, imageUri = imageUri, bitmap = bitmap!!)
+//         editImageViewModel.onEvent(EditImageEvent.UpdateAutoTuneBitmap(adjustedImageBitmap))
+                    if (adjustedImageBitmap != null) {
+                        editImageViewModel.onEvent(EditImageEvent.UpdateColor(adjustedImageBitmap))
+                    }
+
+                }
+            }
             onEvent(EditImageEvent.shouldShowCropOptions(
                 false
             ))
@@ -391,23 +395,23 @@ private fun EditImageContent(
 
 
 
-    val boxSize = 400.dp
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current.density
-    var cropBoxPosition by remember { mutableStateOf(Offset(50f, 50f)) }
-    val screenWidthInPixels = (configuration.screenWidthDp * density).dp
-    val screenHeightInPixels = (configuration.screenHeightDp * density).dp
-
     var scale by remember { mutableStateOf(1f) }
+
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
+    var cropBoxPosition by remember { mutableStateOf(Pair(0f, 0f)) }
+    var cropBoxSize by remember { mutableStateOf(Pair(400f, 400f)) }
+
+
 
     val cropBoxSizeDimension= getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(configuration, density)
     var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     var croppedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    var cropBoxSize by remember { mutableStateOf(cropBoxSizeDimension) }
+
     var imageBitmap by remember {
         mutableStateOf(bitmap)
     }
@@ -422,9 +426,12 @@ private fun EditImageContent(
         colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix)
     }
 
+    // Get the image's dimensions
+    val imageWidth = imageBitmap?.width ?: 400f
+    val imageHeight = imageBitmap?.height ?: 400f
 
-
-    val cropBorderColor = Color.White
+    // Set the maximum crop box size based on the image dimensions
+    val maxCropBoxSize = Pair(imageBitmap?.width?.toFloat() ?: 200f, imageBitmap?.height?.toFloat() ?: 200f)
 
     imageBitmap?.let {
         Box(
@@ -449,10 +456,6 @@ private fun EditImageContent(
                             modifier = Modifier
                                 .weight(0.9f)
                                 .fillMaxSize()
-                                .pointerInput(Unit) {
-
-                                }
-
 
                         ){
 
@@ -461,72 +464,86 @@ private fun EditImageContent(
                                 model = croppedImageUri,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .fillMaxSize(),
+                                    .height(400.dp)
+                                    .width(400.dp)
+                                    .graphicsLayer(
+                                        scaleX = scale,
+                                        scaleY = scale,
+                                        translationX = offsetX,
+                                        translationY = offsetY
+                                    ),
                                 contentScale = ContentScale.Fit,
                                 colorFilter = colorFilter
                             )
 
 
                             if (uiState.isFreeCrop){
+
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxSize()
+                                        .size(cropBoxSize.first.dp, cropBoxSize.second.dp)
+                                        .offset{
+                                            IntOffset(cropBoxPosition.first.roundToInt(),
+                                                cropBoxPosition.second.roundToInt())
+                                        }
                                         .pointerInput(Unit) {
                                             detectTransformGestures { _, pan, zoom, _ ->
-                                                // Update offsetX and offsetY based on user's dragging
-                                                scale *= zoom
-                                                offsetX += pan.x * scale
-                                                offsetY += pan.y * scale
+//                                                   // Update crop box size based on user's input
+                         cropBoxSize = Pair(cropBoxSize.first + pan.x, cropBoxSize.second + pan.y)
+
+                                                // Ensure that the crop box size stays within image boundaries
+                                                cropBoxSize = Pair(
+                                                    cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                    cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                )
                                             }
                                         }
                                 ){
-                                    val maxCropBoxSize = min(
-                                        imageBitmap?.width?.toFloat() ?: 0f,
-                                        imageBitmap?.height?.toFloat() ?: 0f
-                                    )
                                     Box(
                                         modifier = Modifier
-                                            .size(cropBoxSize)
+                                            .fillMaxSize()
+                                            .border(width = 1.dp, color = Color.White)
                                             .background(Color.White.copy(alpha = 0.6f))
                                             .align(Alignment.Center)
 
+
                                     ) {
                                         // Draw the corners of the crop box for resizing
+                                        val cornerSize = 16.dp
 
                                         Box(
                                             modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(cropBoxPosition.x.dp, cropBoxPosition.y.dp)
+                                                .size(cornerSize)
+                                                .offset(0.dp, 0.dp)
                                                 .background(Color.Black)
                                                 .pointerInput(Unit) {
                                                     detectTransformGestures { _, pan, _, panChange ->
-                                                        cropBoxSize += (pan.x - pan.y).dp
-                                                        cropBoxSize =
-                                                            cropBoxSize.coerceIn(
-                                                                getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
-                                                                    configuration, density
-                                                                ),
-                                                                maxCropBoxSize.dp
-                                                            )
+
+                                                        cropBoxSize = Pair(cropBoxSize.first - pan.x, cropBoxSize.second - pan.y)
+                                                        cropBoxPosition = Pair(cropBoxPosition.first + pan.x, cropBoxPosition.second + pan.y)
+                                                        // Ensure corner resizing handles don't exceed image boundaries
+                                                        cropBoxSize = Pair(
+                                                            cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                            cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                        )
 
                                                     }
                                                 }
                                         )
                                         Box(
                                             modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(cropBoxPosition.x.dp, cropBoxPosition.y.dp)
+                                                .size(cornerSize)
+                                                .offset(cropBoxSize.first.dp - cornerSize, 0.dp)
                                                 .background(Color.Red)
                                                 .pointerInput(Unit) {
                                                     detectTransformGestures { _, pan, _, _ ->
-                                                        cropBoxSize += (pan.x - pan.y).dp
-                                                        cropBoxSize =
-                                                            cropBoxSize.coerceIn(
-                                                                getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
-                                                                    configuration, density
-                                                                ),
-                                                                maxCropBoxSize.dp
-                                                            )
+                                                        cropBoxSize = Pair(cropBoxSize.first - pan.x, cropBoxSize.second - pan.y)
+                                                        cropBoxPosition = Pair(cropBoxPosition.first + pan.x, cropBoxPosition.second + pan.y)
+                                                        // Ensure corner resizing handles don't exceed image boundaries
+                                                        cropBoxSize = Pair(
+                                                            cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                            cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                        )
 
                                                     }
                                                 }
@@ -534,41 +551,35 @@ private fun EditImageContent(
                                         Box(
                                             modifier = Modifier
                                                 .size(16.dp)
-                                                .offset(cropBoxPosition.x.dp, cropBoxPosition.y.dp)
+                                                .offset(0.dp, cropBoxSize.second.dp - cornerSize)
                                                 .background(Color.Yellow)
                                                 .pointerInput(Unit) {
                                                     detectTransformGestures { _, pan, _, _ ->
 
-                                                        cropBoxSize += (pan.x + pan.y).dp
-                                                        cropBoxSize =
-                                                            cropBoxSize.coerceIn(
-                                                                getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
-                                                                    configuration, density
-                                                                ),
-                                                                maxCropBoxSize.dp
-                                                            )
+                                                        cropBoxSize = Pair(cropBoxSize.first - pan.x, cropBoxSize.second - pan.y)
+                                                        cropBoxPosition = Pair(cropBoxPosition.first + pan.x, cropBoxPosition.second + pan.y)
+                                                        // Ensure corner resizing handles don't exceed image boundaries
+                                                        cropBoxSize = Pair(
+                                                            cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                            cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                        )
                                                     }
                                                 }
                                         )
                                         Box(
                                             modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(cropBoxPosition.x.dp, cropBoxPosition.y.dp)
+                                                .size(cornerSize)
+                                                .offset(cropBoxSize.first.dp - cornerSize, cropBoxSize.second.dp - cornerSize)
                                                 .background(Color.Green)
                                                 .pointerInput(Unit) {
                                                     detectTransformGestures { _, pan, _, _ ->
-                                                        cropBoxSize += (pan.x + pan.y).dp
-                                                        cropBoxSize =
-                                                            cropBoxSize.coerceIn(
-                                                                getScreenDimension.ScreenDimension.getScreenSmallestDimensionDp(
-                                                                    configuration, density
-                                                                ),
-                                                                maxCropBoxSize.dp
-//                                                                getScreenDimension.ScreenDimension.getScreenMaxDimensionDp(
-//                                                                    it.asImageBitmap(),
-//                                                                    density
-//                                                                )
-                                                            )
+                                                        cropBoxSize = Pair(cropBoxSize.first - pan.x, cropBoxSize.second - pan.y)
+                                                        cropBoxPosition = Pair(cropBoxPosition.first + pan.x, cropBoxPosition.second + pan.y)
+                                                        // Ensure corner resizing handles don't exceed image boundaries
+                                                        cropBoxSize = Pair(
+                                                            cropBoxSize.first.coerceIn(0f, maxCropBoxSize.first),
+                                                            cropBoxSize.second.coerceIn(0f, maxCropBoxSize.second)
+                                                        )
                                                     }
                                                 }
                                         )
@@ -582,12 +593,9 @@ private fun EditImageContent(
                                     imageUri = imageUri,
                                     bitmap = it,
                                     density = density,
-                                    boxSize = boxSize,
-                                    cropBoxSize = cropBoxSize,
+                                    boxSize = cropBoxSize,
                                     offsetX = offsetX ,
                                     offsetY = offsetY,
-                                    onEvent =onEvent,
-                                    cropBoxPosition =cropBoxPosition
                                 )
                               croppedImageUri = saveBitmapAndGetUri(croppedBitmap!!)
                                 onEvent(EditImageEvent.SendCroppedImage(croppedImageUri))
@@ -739,29 +747,70 @@ fun cropBitmap(bitmap: Bitmap?, offsetX: Int, offsetY: Int, cropSize: Int): Bitm
 }
 
 @Composable
-fun cropAndConvertToBitmap(imageUri: Uri?, bitmap: Bitmap?,density: Float, boxSize: Dp, cropBoxSize: Dp, offsetX: Float, offsetY:Float, onEvent: (Event) -> Unit, cropBoxPosition:Offset): Bitmap {
-           val context = LocalContext.current
+fun cropAndConvertToBitmap(
+    imageUri: Uri?,
+    bitmap: Bitmap?,
+    density: Float,
+    boxSize: Pair<Float, Float>,
+    offsetX: Float,
+    offsetY: Float
+): Bitmap {
+    val context = LocalContext.current
 
 
     // Calculate the crop boundaries
-    val topLeftX = cropBoxPosition.x.dp / density
-    val topLeftY = cropBoxPosition.y.dp / density
-    val bottomRightX = (cropBoxPosition.x.toInt() + cropBoxSize.value).dp / density
-    val bottomRightY = (cropBoxPosition.y.toInt() + cropBoxSize.value).dp / density
+//    val topLeftX = cropBoxPosition.x.dp / density
+//    val topLeftY = cropBoxPosition.y.dp / density
+//    val bottomRightX = (cropBoxPosition.x.toInt() + cropBoxSize.value).dp / density
+//    val bottomRightY = (cropBoxPosition.y.toInt() + cropBoxSize.value).dp / density
 
 
-   val photoBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
-   photoBitmap.asImageBitmap()
+    val photoBitmap =
+        BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
+    photoBitmap.asImageBitmap()
 
-    val croppedBp = Bitmap.createBitmap(
+
+
+//    val x = max(10, topLeftX.value.toInt());
+//    val y = max(10, topLeftY.value.toInt());
+//    val width = min((bottomRightX - topLeftX).value.toInt(), bitmapWidth - x);
+//    val height = min((bottomRightY - topLeftY).value.toInt(), bitmapHeight - y);
+
+    // Calculate the crop boundaries
+    val topLeftX = (offsetX / density).toInt()
+    val topLeftY = (offsetY / density).toInt()
+    val bottomRightX = ((offsetX + boxSize.first) / density).toInt()
+    val bottomRightY = ((offsetY + boxSize.second) / density).toInt()
+
+    // Calculate the width and height of the cropped region
+    val cropWidth = bottomRightX - topLeftX
+    val cropHeight = bottomRightY - topLeftY
+
+    val bitmapWidth = photoBitmap?.width ?: 0
+    val bitmapHeight = photoBitmap?.height ?: 0
+
+
+    val x = max(0, topLeftX)
+    val y = max(0, topLeftY)
+    val width = min(cropWidth, bitmapWidth - x)
+    val height = min(cropHeight, bitmapHeight - y)
+
+
+
+    // Create a new bitmap for the cropped image
+    val croppedBitmap = Bitmap.createBitmap(cropWidth, cropHeight, Bitmap.Config.ARGB_8888)
+
+    // Create a canvas for the new bitmap
+    val canvas = Canvas(croppedBitmap)
+
+    // Draw the cropped region from the original bitmap onto the new bitmap
+    canvas.drawBitmap(
         photoBitmap,
-        topLeftX.value.toInt(),
-        topLeftY.value.toInt(),
-        (bottomRightX - topLeftX).value.toInt(),
-        (bottomRightY - topLeftY).value.toInt()
+        -topLeftX.toFloat(),
+        -topLeftY.toFloat(),
+        null
     )
-
-//    val croppedWidth = (cropRight - cropLeft).toInt()
+    //    val croppedWidth = (cropRight - cropLeft).toInt()
 //    val croppedHeight = (cropBottom - cropTop).toInt()
 
 //    val croppedBitmap =Bitmap.createBitmap(
@@ -795,7 +844,8 @@ fun cropAndConvertToBitmap(imageUri: Uri?, bitmap: Bitmap?,density: Float, boxSi
 //    canvas.drawBitmap(photoBitmap, srcRect, destRect, null)
 
 
-    return croppedBp
+
+    return croppedBitmap
 
 
 }
@@ -845,25 +895,6 @@ fun bitmapToUri(context: Context, bitmap: Bitmap, onEvent: (Event) -> Unit): Uri
 
 }
 
-fun calculateCornerOffset(corner: CropCorner, cornerSize: Dp): IntOffset {
-    val xOffset = if (corner == CropCorner.TopRight || corner == CropCorner.BottomRight) {
-        -cornerSize
-    } else {
-        0.dp
-    }
-
-    val yOffset = if (corner == CropCorner.BottomLeft || corner == CropCorner.BottomRight) {
-        -cornerSize
-    } else {
-        0.dp
-    }
-
-    return IntOffset(xOffset.value.toInt(), yOffset.value.toInt())
-}
-
-enum class CropCorner {
-    TopLeft, TopRight, BottomLeft, BottomRight
-}
 
 @Composable
 fun saveBitmapAndGetUri(bitmap: Bitmap): Uri {
@@ -879,3 +910,5 @@ fun saveBitmapAndGetUri(bitmap: Bitmap): Uri {
     fileOutputStream.close()
     return imageFile.toUri()
 }
+
+

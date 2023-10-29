@@ -547,5 +547,6 @@ sealed interface HomeScreenEvent : Event {
     data class updateEditColorFilterArray(val colorArray: FloatArray, val imageUri: Uri, val bitmap: Bitmap?): HomeScreenEvent
     data class UpdateCroppedUri(val uri: Uri?):HomeScreenEvent
 
+    data class CropState(var scale: Float = 1.0f): HomeScreenEvent
 
 }

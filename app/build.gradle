@@ -34,8 +34,9 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "1.8"
     }
+
     buildFeatures {
         compose true
     }
@@ -77,9 +78,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
 
-    var gpu_image = "2.1.0"
-    //GPU Image
-    implementation "jp.co.cyberagent.android:gpuimage:$gpu_image"
+   
 
     //Hilt for jetpack compose
     implementation "androidx.hilt:hilt-navigation-compose:$hilt_compose_version"
