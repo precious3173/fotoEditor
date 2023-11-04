@@ -34,6 +34,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.UpdateAutoTuneBitmap -> onAutoTuneBitmap(event.imageBitmap)
             is EditImageEvent.shouldShowCropOptions -> shouldShowCropOption(event.boolean)
             is EditImageEvent.ShouldSendCropped -> shouldSendCroppedBitmap(event.boolean)
+            is EditImageEvent.IsFreeMode -> isFreeMode(event.boolean)
         }
     }
 
@@ -92,6 +93,13 @@ class EditImageViewModel @Inject constructor(
             )
         }
     }
+    private fun isFreeMode (boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                isFreeMode = boolean
+            )
+        }
+    }
 }
 
 sealed interface EditImageEvent : Event {
@@ -106,5 +114,6 @@ sealed interface EditImageEvent : Event {
     data class UpdateAutoTuneBitmap(val imageBitmap: ImageBitmap): EditImageEvent
     data class shouldShowCropOptions(val boolean: Boolean): EditImageEvent
     data class ShouldSendCropped(val boolean: Boolean): EditImageEvent
+    data class IsFreeMode(val boolean: Boolean): EditImageEvent
 
 }
