@@ -12,24 +12,19 @@ import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -42,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,19 +46,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageView
 import com.example.fotoeditor.FilterColors.SelectFilter
 import com.example.fotoeditor.R
 import com.example.fotoeditor.ui.components.AutoTune.AutoTune.autoTuneImage
@@ -73,11 +69,17 @@ import com.example.fotoeditor.ui.nav.Navigator
 import com.example.fotoeditor.ui.nav.Screen
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenEvent
 import com.example.fotoeditor.ui.screens.homescreen.HomeScreenViewModel
+import com.example.fotoeditor.ui.screens.homescreen.HomeUiState
 import com.example.fotoeditor.ui.utils.Crops
 import com.example.fotoeditor.ui.utils.CropsLibrary
 import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.toBitmap
-import kotlin.math.min
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+
 
 @SuppressLint("UseCompatLoadingForDrawables")
 @Composable
@@ -142,7 +144,9 @@ fun EditImageRoute(
                      uiState = uiState,
                      crops = CropsLibrary.crops,
                      showCropOption = showCropOption,
-                     isCropping = isCropping
+                     isCropping = isCropping,
+                     homeUiState = homeScreenUiState,
+                     homeScreenViewModel = homeScreenViewModel
 
                  )
 
@@ -156,11 +160,16 @@ fun EditImageRoute(
                     .background(Color.White)
                     .shadow(elevation = 1.dp)
             ) {
-
+                val coroutineScope = rememberCoroutineScope()
                         EditImageBottomBar(
                             save = {
                                 IconButton(onClick = {
-                                    //navigator.navigateTo(Screen.HomeScreen.route)
+                                    coroutineScope.launch {
+                                        delay(100)
+
+                                    navigator.navigateTo(Screen.HomeScreen.route)
+                                    }
+
 
                                 accessStorage()
                                     homeScreenViewModel.onEvent(HomeScreenEvent.SendEditedUri)
@@ -174,6 +183,8 @@ fun EditImageRoute(
 
                                     editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
                                     editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+
+
                                 }) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
@@ -322,7 +333,9 @@ private fun EditImageScreen(
     uiState: EditImageUiState,
     crops: List<Crops>,
     showCropOption: Boolean,
-    isCropping: Boolean
+    isCropping: Boolean,
+    homeUiState: HomeUiState,
+    homeScreenViewModel: HomeScreenViewModel
 ) {
     val TAG = "EditImage"
     Box(
@@ -344,7 +357,9 @@ private fun EditImageScreen(
                     crops = crops,
                     showCropOption = showCropOption,
                     onEvent = onEvent,
-                    isCropping = isCropping
+                    isCropping = isCropping,
+                    homeUiState = homeUiState,
+                    homeScreenViewModel = homeScreenViewModel
                 )
 
 
@@ -371,14 +386,18 @@ private fun EditImageContent(
     crops: List<Crops>,
     showCropOption: Boolean,
     onEvent: (Event) -> Unit,
-    isCropping: Boolean
+    isCropping: Boolean,
+    homeUiState: HomeUiState,
+    homeScreenViewModel: HomeScreenViewModel
 ) {
 
     val context = LocalContext.current
     var cropBoxWidth by remember { mutableStateOf(100) }
     var cropBoxHeight by remember { mutableStateOf(100) }
 
+    val cropImageView = remember { CropImageView(context) }
 
+    var cropImage: ManagedActivityResultLauncher<CropImageContractOptions, CropImageView.CropResult>? = null
 
 
     val configuration = LocalConfiguration.current
@@ -407,10 +426,10 @@ private fun EditImageContent(
 
         colorFilter = ColorFilter.colorMatrix(uiState.editColorMatrix)
     }
-    val aspectRatio = imageBitmap!!.width.toFloat() / imageBitmap!!.height.toFloat()
+//    val aspectRatio = imageBitmap!!.width.toFloat() / imageBitmap!!.height.toFloat()
 
 
-    val cropBorderColor = Color.White
+//    val cropBorderColor = Color.White
 
 
             Column(
@@ -430,170 +449,207 @@ private fun EditImageContent(
 
                             val current = LocalDensity.current
                             imageBitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .onSizeChanged { layoutCoordinates ->
-                                        imageWidth = layoutCoordinates.width
-                                        imageHeight = layoutCoordinates.height
-                                    }
-                                    .aspectRatio(aspectRatio)
-                                    .fillMaxSize()
-                                    .background(Color.Black)
-                                    .align(Alignment.Center),
-                                contentScale = ContentScale.Fit,
-                                colorFilter = colorFilter,
 
-
-                            )
-
-
-                            val maxSize = maxOf(imageWidth.dp, imageHeight.dp)
 
                             if (uiState.isFreeMode) {
 
-                                Log.d(TAG, "the height is $cropBoxHeight and width is $cropBoxWidth")
-                                    Box(
-                                        modifier = Modifier
-                                            .size(cropBoxHeight.dp, cropBoxWidth.dp)
-                                            .background(Color.White.copy(alpha = 0.6f))
-                                            .align(Alignment.Center)
+                                AndroidView(
+                                    modifier = Modifier
+                                        .align(Alignment.Center),
+                                    factory = {
+                                        context ->
+
+                                    cropImageView.apply {
+                                        isAutoZoomEnabled = true
+                                        setImageUriAsync(imageUri)
+                                        setOnCropImageCompleteListener {
+                                                _, result ->
 
 
-                                    ) {
-                                        // Draw the corners of the crop box for resizing
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(0.dp, 0.dp)
-                                                .background(Color.Black)
-                                                .pointerInput(Unit) {
-                                                    detectTransformGestures { _, pan, _, panChange ->
-                                                        val newCropBoxWidth =
-                                                            (cropBoxWidth - pan.x).coerceIn(
-                                                                10f,
-                                                                imageWidth.toFloat()
-                                                            )
-                                                        val newCropBoxHeight =
-                                                            (cropBoxHeight - pan.y).coerceIn(
-                                                                10f,
-                                                                imageHeight.toFloat()
-                                                            )
+                                        }
+                                    }
+                                }
+                                )
 
 
-                                                        // Ensure the crop box doesn't exceed the image boundaries
-                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
-                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
-                                                        ) {
-                                                            cropBoxWidth = newCropBoxWidth.toInt()
-                                                            cropBoxHeight = newCropBoxHeight.toInt()
-                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
-                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
-                                                        }
 
-                                                    }
-                                                }
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(cropBoxWidth.dp - 16.dp, 0.dp)
-                                                .background(Color.Red)
-                                                .pointerInput(Unit) {
-                                                    detectTransformGestures { _, pan, _, _ ->
-                                                        val newCropBoxWidth =
-                                                            (cropBoxWidth - pan.x).coerceIn(
-                                                                10f,
-                                                                imageWidth.toFloat()
-                                                            )
-                                                        val newCropBoxHeight =
-                                                            (cropBoxHeight - pan.y).coerceIn(
-                                                                10f,
-                                                                imageHeight.toFloat()
-                                                            )
+                                val maxSize = maxOf(imageWidth.dp, imageHeight.dp)
+
+                                cropImage = rememberLauncherForActivityResult(CropImageContract()) { result ->
+                                    if (result.isSuccessful) {
+                                        // Use the returned uri.
+                                        val uriContent = result.uriContent
+                                        val uriFilePath = result.getUriFilePath(context) // optional usage
+                                    } else {
+                                        // An error occurred.
+                                        val exception = result.error
+                                    }
 
 
-                                                        // Ensure the crop box doesn't exceed the image boundaries
-                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
-                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
-                                                        ) {
-                                                            cropBoxWidth = newCropBoxWidth.toInt()
-                                                            cropBoxHeight = newCropBoxHeight.toInt()
-                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
-                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
-                                                        }
-                                                    }
-                                                }
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(0.dp, cropBoxHeight.dp - 16.dp)
-                                                .background(Color.Yellow)
-                                                .pointerInput(Unit) {
-                                                    detectTransformGestures { _, pan, _, _ ->
-
-                                                        val newCropBoxWidth =
-                                                            (cropBoxWidth - pan.x).coerceIn(
-                                                                10f,
-                                                                imageWidth.toFloat()
-                                                            )
-                                                        val newCropBoxHeight =
-                                                            (cropBoxHeight - pan.y).coerceIn(
-                                                                10f, imageHeight.toFloat()
-                                                            )
 
 
-                                                        // Ensure the crop box doesn't exceed the image boundaries
-                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
-                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
-                                                        ) {
-                                                            cropBoxWidth = newCropBoxWidth.toInt()
-                                                            cropBoxHeight = newCropBoxHeight.toInt()
-                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
-                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
-                                                        }
-                                                    }
-                                                }
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .offset(cropBoxWidth.dp - 16.dp, cropBoxHeight.dp - 16.dp)
-                                                .background(Color.Green)
-                                                .pointerInput(Unit) {
-                                                    detectTransformGestures { _, pan, _, _ ->
-                                                        val newCropBoxWidth =
-                                                            (cropBoxWidth + pan.x).coerceIn(
-                                                                10f,
-                                                                imageWidth.toFloat()
-                                                            )
-                                                        val newCropBoxHeight =
-                                                            (cropBoxHeight + pan.y).coerceIn(
-                                                                10f,
-                                                                imageHeight.toFloat()
-                                                            )
 
-
-                                                        // Ensure the crop box doesn't exceed the image boundaries
-                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
-                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
-                                                        ) {
-                                                            cropBoxWidth = newCropBoxWidth.toInt()
-                                                            cropBoxHeight = newCropBoxHeight.toInt()
-                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
-                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
-                                                        }
-                                                    }
-                                                }
-                                        )
+//                                Log.d(TAG, "the height is $cropBoxHeight and width is $cropBoxWidth")
+//                                    Box(
+//                                        modifier = Modifier
+//                                            .size(cropBoxHeight.dp, cropBoxWidth.dp)
+//                                            .background(Color.White.copy(alpha = 0.6f))
+//                                            .align(Alignment.Center)
+//
+//
+//                                    ) {
+//                                        // Draw the corners of the crop box for resizing
+//                                        Box(
+//                                            modifier = Modifier
+//                                                .size(16.dp)
+//                                                .offset(0.dp, 0.dp)
+//                                                .background(Color.Black)
+//                                                .pointerInput(Unit) {
+//                                                    detectTransformGestures { _, pan, _, panChange ->
+//                                                        val newCropBoxWidth =
+//                                                            (cropBoxWidth - pan.x).coerceIn(
+//                                                                10f,
+//                                                                imageWidth.toFloat()
+//                                                            )
+//                                                        val newCropBoxHeight =
+//                                                            (cropBoxHeight - pan.y).coerceIn(
+//                                                                10f,
+//                                                                imageHeight.toFloat()
+//                                                            )
+//
+//
+//                                                        // Ensure the crop box doesn't exceed the image boundaries
+//                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
+//                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
+//                                                        ) {
+//                                                            cropBoxWidth = newCropBoxWidth.toInt()
+//                                                            cropBoxHeight = newCropBoxHeight.toInt()
+//                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
+//                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
+//                                                        }
+//
+//                                                    }
+//                                                }
+//                                        )
+//                                        Box(
+//                                            modifier = Modifier
+//                                                .size(16.dp)
+//                                                .offset(cropBoxWidth.dp - 16.dp, 0.dp)
+//                                                .background(Color.Red)
+//                                                .pointerInput(Unit) {
+//                                                    detectTransformGestures { _, pan, _, _ ->
+//                                                        val newCropBoxWidth =
+//                                                            (cropBoxWidth - pan.x).coerceIn(
+//                                                                10f,
+//                                                                imageWidth.toFloat()
+//                                                            )
+//                                                        val newCropBoxHeight =
+//                                                            (cropBoxHeight - pan.y).coerceIn(
+//                                                                10f,
+//                                                                imageHeight.toFloat()
+//                                                            )
+//
+//
+//                                                        // Ensure the crop box doesn't exceed the image boundaries
+//                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
+//                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
+//                                                        ) {
+//                                                            cropBoxWidth = newCropBoxWidth.toInt()
+//                                                            cropBoxHeight = newCropBoxHeight.toInt()
+//                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
+//                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
+//                                                        }
+//                                                    }
+//                                                }
+//                                        )
+//                                        Box(
+//                                            modifier = Modifier
+//                                                .size(16.dp)
+//                                                .offset(0.dp, cropBoxHeight.dp - 16.dp)
+//                                                .background(Color.Yellow)
+//                                                .pointerInput(Unit) {
+//                                                    detectTransformGestures { _, pan, _, _ ->
+//
+//                                                        val newCropBoxWidth =
+//                                                            (cropBoxWidth - pan.x).coerceIn(
+//                                                                10f,
+//                                                                imageWidth.toFloat()
+//                                                            )
+//                                                        val newCropBoxHeight =
+//                                                            (cropBoxHeight - pan.y).coerceIn(
+//                                                                10f, imageHeight.toFloat()
+//                                                            )
+//
+//
+//                                                        // Ensure the crop box doesn't exceed the image boundaries
+//                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
+//                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
+//                                                        ) {
+//                                                            cropBoxWidth = newCropBoxWidth.toInt()
+//                                                            cropBoxHeight = newCropBoxHeight.toInt()
+//                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
+//                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
+//                                                        }
+//                                                    }
+//                                                }
+//                                        )
+//                                        Box(
+//                                            modifier = Modifier
+//                                                .size(16.dp)
+//                                                .offset(cropBoxWidth.dp - 16.dp, cropBoxHeight.dp - 16.dp)
+//                                                .background(Color.Green)
+//                                                .pointerInput(Unit) {
+//                                                    detectTransformGestures { _, pan, _, _ ->
+//                                                        val newCropBoxWidth =
+//                                                            (cropBoxWidth + pan.x).coerceIn(
+//                                                                10f,
+//                                                                imageWidth.toFloat()
+//                                                            )
+//                                                        val newCropBoxHeight =
+//                                                            (cropBoxHeight + pan.y).coerceIn(
+//                                                                10f,
+//                                                                imageHeight.toFloat()
+//                                                            )
+//
+//
+//                                                        // Ensure the crop box doesn't exceed the image boundaries
+//                                                        if (newCropBoxWidth <= imageWidth && newCropBoxHeight <= imageHeight
+//                                                            && newCropBoxWidth >= 10 && newCropBoxHeight >= 10
+//                                                        ) {
+//                                                            cropBoxWidth = newCropBoxWidth.toInt()
+//                                                            cropBoxHeight = newCropBoxHeight.toInt()
+//                                                            offsetX += (cropBoxWidth  - newCropBoxWidth)/2
+//                                                            offsetY += (cropBoxHeight - newCropBoxHeight)/2
+//                                                        }
+//                                                    }
+//                                                }
+//                                        )
 
 
                                     }
 
 
                             }
+                                else{
+
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier
+//                                        .onSizeChanged { layoutCoordinates ->
+//                                            imageWidth = layoutCoordinates.width
+//                                            imageHeight = layoutCoordinates.height
+//                                        }
+//                                        .aspectRatio(aspectRatio)
+                                        .fillMaxSize()
+                                        .background(Color.Black)
+                                        .align(Alignment.Center),
+                                    contentScale = ContentScale.Fit,
+                                    colorFilter = colorFilter,
+
+
+                                    )
+                                }
                             }
                         }
 
@@ -613,72 +669,39 @@ private fun EditImageContent(
 
                     Spacer(modifier = Modifier.weight(0.1f))
 
+
+
+
+
                 if (uiState.isBitmapCropped) {
+                    val croppedBitmap = cropImageView.getCroppedImage()
+
+                    try {
+                        if (croppedBitmap != null){ imageBitmap = croppedBitmap
+                        }
+
+                        val uri =convertToUri(imageBitmap!!, context)
+                        onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
+                        if (uri != null
+                        ){
+                            homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
+//                       homeUiState.importedImageUri = uri
+                            Log.d(TAG, "uri is not null")
+                        }
+                        else{
+                            Log.d(TAG, "uri is null")
+                        }
+
+                    }
+                    catch (e: Exception){
+                        e.stackTrace
+                    }
 
 
-                    boxSize = max(400.dp, 400.dp)
-                  val croppedBitmap =  CropAndConvertToBitmap(imageUri,imageBitmap,density,boxSize, cropBoxHeight.dp, cropBoxWidth.dp, offsetX, offsetY, cropBoxRect, imageHeight, imageWidth, aspectRatio)
 
-                        imageBitmap = croppedBitmap
-                        onEvent(HomeScreenEvent.SendCroppedBitmap(croppedBitmap))
-                        Toast.makeText(context, "Cropped Bitmap: $croppedBitmap", Toast.LENGTH_SHORT).show()
 
                 }
                 }
-
-
-
-
-
-
-//     else if (uiState.autoTuneBitmap != null){
-//         Toast.makeText(LocalContext.current, "autotune working", Toast.LENGTH_SHORT).show()
-//         Box(
-//             Modifier
-//                 .fillMaxSize()
-//                 .then(modifier)
-//         ) {
-//
-//             Image(
-//                 bitmap = uiState.autoTuneBitmap!!,
-//                 contentDescription = null,
-//                 modifier = Modifier
-//                     .fillMaxSize(),
-//                 contentScale = ContentScale.Fit,
-//             )
-//
-//         }
-//
-//     }
-//
-//    else{
-//    bitmap?.let {
-//        Box(
-//            Modifier
-//                .fillMaxSize()
-//                .then(modifier)
-//        ) {
-//            Column( Modifier
-//                .fillMaxSize(),
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.SpaceBetween,) {
-//
-//
-//                Image(
-//                    bitmap = it.asImageBitmap(),
-//                    contentDescription = null,
-//                    modifier = Modifier
-//                        .fillMaxSize(),
-//                    contentScale = ContentScale.Fit,
-//                )
-//                CropSheet(crops = CropsLibrary.crops)
-//            }
-//
-//
-//            }
-//
-//    }
-//    }
 
 
     }
@@ -958,3 +981,24 @@ fun loadImageFromUri(context: Context, imageUri: Uri?): Bitmap? {
       return null
 }
 
+
+fun convertToUri(bitmap: Bitmap, context: Context): Uri?{
+
+    val tempFile = File(context.cacheDir, "temp_image.jpg");
+    try {
+        val out = FileOutputStream(tempFile);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        out.flush();
+        out.close();
+
+        return Uri.fromFile(tempFile)
+    } catch (e: IOException) {
+        e.printStackTrace();
+
+    }
+
+
+
+    return null
+
+}
