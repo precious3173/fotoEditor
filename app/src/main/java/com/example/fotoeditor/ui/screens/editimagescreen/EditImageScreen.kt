@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -410,6 +411,9 @@ private fun EditImageContent(
     val density = LocalDensity.current.density
     val screenWidthInPixels = (configuration.screenWidthDp * density).dp
     val screenHeightInPixels = (configuration.screenHeightDp * density).dp
+    var isCroppingFreeMode by remember {
+        mutableStateOf(false)
+    }
 
     var scale by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
@@ -468,6 +472,7 @@ private fun EditImageContent(
 
                             if (uiState.isFreeMode) {
 
+
                                 Box(modifier =
                                 Modifier.fillMaxSize()){
                                     AndroidView(
@@ -477,6 +482,7 @@ private fun EditImageContent(
                                                 context ->
 
                                             cropImageView.apply {
+
                                                 isAutoZoomEnabled = true
                                                 setImageUriAsync(imageUri)
                                                 setOnCropImageCompleteListener {
@@ -484,6 +490,28 @@ private fun EditImageContent(
 
 
                                                 }
+                                                when(cropPosition){
+
+                                                    3 ->{
+                                                        setAspectRatio(1, 1)
+                                                    }
+                                                    4 ->{
+                                                        setAspectRatio(1.4142.roundToInt(), 1)
+                                                    }
+                                                    5 ->{
+                                                        setAspectRatio(3, 2)
+                                                    }
+                                                    6 ->{
+                                                        setAspectRatio(5, 4)
+                                                    }
+                                                    7 ->{
+                                                        setAspectRatio(7, 5)
+                                                    }
+                                                    8 ->{
+                                                        setAspectRatio(16, 9)
+                                                    }
+                                                }
+
                                             }
                                         }
                                     )
@@ -509,49 +537,49 @@ private fun EditImageContent(
                                     }
 
 
-                            }else if (uiState.isNotFreeMode){
-
-                                AndroidView(
-                                    modifier = Modifier
-                                        .align(Alignment.Center),
-                                    factory = {
-                                            context ->
-
-
-                                        cropImageView.apply {
-
-
-                                            isAutoZoomEnabled = true
-                                            setImageUriAsync(imageUri)
-                                            setAspectRatio(aspectRatio.first, aspectRatio.second)
-                                            Toast.makeText(context, "${aspectRatio.second}", Toast.LENGTH_SHORT).show()
-
-                                            setOnCropImageCompleteListener {
-                                                    _, result ->
-
-
-                                            }
-                                        }
-                                    }
-                                )
-
-
-
-                                val maxSize = maxOf(imageWidth.dp, imageHeight.dp)
-
-                                cropImage = rememberLauncherForActivityResult(CropImageContract()) { result ->
-                                    if (result.isSuccessful) {
-                                        // Use the returned uri.
-                                        val uriContent = result.uriContent
-                                        val uriFilePath = result.getUriFilePath(context) // optional usage
-                                    } else {
-                                        // An error occurred.
-                                        val exception = result.error
-                                    }
-
-
-
-                                }
+//                            }else if (uiState.isNotFreeMode){
+//
+//                                AndroidView(
+//                                    modifier = Modifier
+//                                        .align(Alignment.Center),
+//                                    factory = {
+//                                            context ->
+//
+//
+//                                        cropImageView.apply {
+//
+//
+//                                            isAutoZoomEnabled = true
+//                                            setImageUriAsync(imageUri)
+//                                            setAspectRatio(aspectRatio.first, aspectRatio.second)
+//                                            Toast.makeText(context, "${aspectRatio.second}", Toast.LENGTH_SHORT).show()
+//
+//                                            setOnCropImageCompleteListener {
+//                                                    _, result ->
+//
+//
+//                                            }
+//                                        }
+//                                    }
+//                                )
+//
+//
+//
+//                                val maxSize = maxOf(imageWidth.dp, imageHeight.dp)
+//
+//                                cropImage = rememberLauncherForActivityResult(CropImageContract()) { result ->
+//                                    if (result.isSuccessful) {
+//                                        // Use the returned uri.
+//                                        val uriContent = result.uriContent
+//                                        val uriFilePath = result.getUriFilePath(context) // optional usage
+//                                    } else {
+//                                        // An error occurred.
+//                                        val exception = result.error
+//                                    }
+//
+//
+//
+//                                }
                             }
                                 else{
 
@@ -578,6 +606,7 @@ private fun EditImageContent(
                                 1 -> {
                                     onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
 
+
                                 }
                                 2 -> {
 
@@ -585,31 +614,41 @@ private fun EditImageContent(
 
                                 }
                                 3 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio=(Pair(1, 1))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+
+//                                    aspectRatio=(Pair(1, 1))
 
                                 }
                                 4 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio = (Pair(1.4142.roundToInt(), 1))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+//
+//                                    aspectRatio = (Pair(1.4142.roundToInt(), 1))
 
                                 }
                                 5 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio = (Pair(3, 2))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+
+
+//                                    aspectRatio = (Pair(3, 2))
 
                                 }
                                 6 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio = (Pair(5, 4))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+//                                    aspectRatio = (Pair(5, 4))
                                 }
                                 7 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio = (Pair(7, 5))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+//                                    aspectRatio = (Pair(7, 5))
                                 }
                                 8 -> {
-                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
-                                    aspectRatio = (Pair(16, 9))
+                                    onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
+//                                    onEvent(EditImageEvent.IsNotFreeMode(!uiState.isNotFreeMode))
+//                                    aspectRatio = (Pair(16, 9))
                                 }
                             }
                         }

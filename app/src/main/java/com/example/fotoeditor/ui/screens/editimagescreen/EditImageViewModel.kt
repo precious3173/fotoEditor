@@ -98,6 +98,7 @@ class EditImageViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isFreeMode = boolean,
+                isNotFreeMode = false
 
             )
         }
@@ -105,7 +106,8 @@ class EditImageViewModel @Inject constructor(
     private fun isNotFreeMode (boolean: Boolean){
         _uiState.update {
             it.copy(
-                isNotFreeMode = boolean
+                isNotFreeMode = boolean,
+                isFreeMode = false
             )
         }
     }
