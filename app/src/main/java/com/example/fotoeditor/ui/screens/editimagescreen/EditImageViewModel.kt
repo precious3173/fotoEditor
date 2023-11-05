@@ -35,6 +35,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.shouldShowCropOptions -> shouldShowCropOption(event.boolean)
             is EditImageEvent.ShouldSendCropped -> shouldSendCroppedBitmap(event.boolean)
             is EditImageEvent.IsFreeMode -> isFreeMode(event.boolean)
+            is EditImageEvent.IsNotFreeMode -> isNotFreeMode(event.boolean)
         }
     }
 
@@ -96,7 +97,15 @@ class EditImageViewModel @Inject constructor(
     private fun isFreeMode (boolean: Boolean){
         _uiState.update {
             it.copy(
-                isFreeMode = boolean
+                isFreeMode = boolean,
+
+            )
+        }
+    }
+    private fun isNotFreeMode (boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                isNotFreeMode = boolean
             )
         }
     }
@@ -115,5 +124,6 @@ sealed interface EditImageEvent : Event {
     data class shouldShowCropOptions(val boolean: Boolean): EditImageEvent
     data class ShouldSendCropped(val boolean: Boolean): EditImageEvent
     data class IsFreeMode(val boolean: Boolean): EditImageEvent
+    data class IsNotFreeMode(val boolean: Boolean): EditImageEvent
 
 }

@@ -15,5 +15,6 @@ data class EditImageUiState(
     var autoTuneBitmap: ImageBitmap?= null,
     var showCropOption: Boolean = false,
     var isBitmapCropped: Boolean = false,
-    var isFreeMode: Boolean = false
+    var isFreeMode: Boolean = false,
+    var isNotFreeMode: Boolean = false
 )

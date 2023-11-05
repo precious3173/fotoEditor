@@ -23,7 +23,7 @@ object CropsLibrary{
         ),
         Crops(
             id = 3,
-            title = "Original",
+            title = "Square",
             icon = R.drawable.crop_square
         ),
         Crops(
