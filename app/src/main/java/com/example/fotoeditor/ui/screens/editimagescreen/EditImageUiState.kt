@@ -16,5 +16,6 @@ data class EditImageUiState(
     var showCropOption: Boolean = false,
     var isBitmapCropped: Boolean = false,
     var isFreeMode: Boolean = false,
-    var isNotFreeMode: Boolean = false
+    var isNotFreeMode: Boolean = false,
+    var rotateImage: Boolean = false
 )

@@ -36,6 +36,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.ShouldSendCropped -> shouldSendCroppedBitmap(event.boolean)
             is EditImageEvent.IsFreeMode -> isFreeMode(event.boolean)
             is EditImageEvent.IsNotFreeMode -> isNotFreeMode(event.boolean)
+            is EditImageEvent.ShouldRotateImage -> shouldRotateImage(event.boolean)
         }
     }
 
@@ -87,6 +88,14 @@ class EditImageViewModel @Inject constructor(
         }
     }
 
+    private fun shouldRotateImage(boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                rotateImage = boolean
+            )
+        }
+    }
+
     private fun shouldSendCroppedBitmap(boolean: Boolean){
         _uiState.update {
             it.copy(
@@ -127,5 +136,6 @@ sealed interface EditImageEvent : Event {
     data class ShouldSendCropped(val boolean: Boolean): EditImageEvent
     data class IsFreeMode(val boolean: Boolean): EditImageEvent
     data class IsNotFreeMode(val boolean: Boolean): EditImageEvent
+    data class ShouldRotateImage(val boolean: Boolean): EditImageEvent
 
 }

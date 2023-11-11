@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -345,7 +346,9 @@ fun EditImageMode(
 
             Spacer(modifier = Modifier.width(15.dp))
             IconButton(onClick = {
-
+                onEvent(EditImageEvent.ShouldRotateImage(
+                    !uiState.rotateImage
+                ))
             }) {
                 Icon(painterResource(id =  R.drawable.icon_rotate)
                     , contentDescription = null,
@@ -428,6 +431,7 @@ private fun EditImageContent(
     var cropBoxHeight by remember { mutableStateOf(100) }
 
     val cropImageView = remember { CropImageView(context) }
+    val coroutineScope = rememberCoroutineScope()
 
     var cropImage: ManagedActivityResultLauncher<CropImageContractOptions, CropImageView.CropResult>? = null
 
@@ -451,7 +455,7 @@ private fun EditImageContent(
     var aspectRatio by remember {
         mutableStateOf(Pair(0, 0))
     }
-
+    var rotationState by remember { mutableStateOf(0f) }
     var imageWidth by remember { mutableStateOf(100) }
     var imageHeight by remember { mutableStateOf(100) }
 
@@ -613,7 +617,8 @@ private fun EditImageContent(
                                     contentDescription = null,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .align(Alignment.Center),
+                                        .align(Alignment.Center)
+                                        .graphicsLayer(rotationZ = rotationState),
                                     contentScale = ContentScale.Fit,
                                     colorFilter = colorFilter,
 
@@ -681,6 +686,7 @@ private fun EditImageContent(
                     }
 
 
+
                     Spacer(modifier = Modifier.weight(0.1f))
 
 
@@ -717,264 +723,22 @@ private fun EditImageContent(
                 }
                 }
 
+    if (uiState.rotateImage){
+        Toast.makeText(context, "$rotationState", Toast.LENGTH_SHORT).show()
+        LaunchedEffect(key1 ="" ,){
+            coroutineScope.launch {
+                rotationState  += 45f
+                delay(1000)
+                !uiState.rotateImage
+            }
+        }
+
 
     }
 
-@SuppressLint("SuspiciousIndentation")
-@Composable
-fun CropAndConvertToBitmap(
-    imageUri: Uri?,
-    bitmap: Bitmap?,
-    density: Float,
-    boxSize: Dp,
-    cropBoxHeight: Dp,
-    cropBoxWidth: Dp,
-    offsetX: Float,
-    offsetY: Float,
-    cropRect: Rect,
-    imageHeight: Int,
-    imageWidth: Int,
-    aspectRatio: Float
-): Bitmap {
-    val context = LocalContext.current
-//   val photoBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
-//   photoBitmap.asImageBitmap()
-//    val photoBitmap= bitmap!!.asImageBitmap()
-    // Calculate the crop boundaries
-//    val cropLeft = (cropBoxSize / 2)
-//    val cropTop = (cropBoxSize / 2)
-//    val cropRight = (boxSize - cropBoxSize / 2)
-//    val cropBottom = (boxSize - cropBoxSize / 2)
 
+    }
 
-
-    val photoBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
-
-   val boxWidth = imageWidth/2;                      //    ||                   ||
-    val boxHeight = imageHeight/2;
-
-//    // Calculate the left, top, right, and bottom coordinates for the crop rectangle
-//    val left = (offsetX / imageWidth.toFloat()).toInt()
-//    val top = (offsetY / imageHeight.toFloat()).toInt()
-//    val right = left + cropBoxWidth.value
-//    val bottom = top + cropBoxHeight.value
-//
-//
-//    // Ensure the crop rectangle stays within the image boundaries
-//    val cropLeft = max(0.dp, left.dp)
-//    val cropTop = max(0.dp, top.dp)
-//    val cropRight = min(imageWidth, right.toInt())
-//    val cropBottom = min(imageHeight, bottom.toInt())
-
-
-
-
-//    // Calculate the crop boundaries
-//    val left = (offsetX * (imageWidth / boxSize.value)).toInt()
-//    val top = (offsetY * (imageHeight / boxSize.value)).toInt()
-//    val right = (left + cropBoxWidth.value * (imageWidth / boxSize.value)).toInt()
-//    val bottom = (top + cropBoxHeight.value * (imageHeight / boxSize.value)).toInt()
-
-    // Ensure the crop rectangle stays within the image boundaries
-//    val cropLeft = max(0.dp, left.dp)
-//    val cropTop = max(0.dp, top.dp)
-//    val cropRight = min(imageWidth, right)
-//    val cropBottom = min(imageHeight, bottom)
-
-//    val cropRect = Rect(
-//        cropLeft.value.toInt(),
-//        cropTop.value.toInt(),
-//        cropBottom,
-//        cropRight
-//    )
-
-//    val croppedWidth = cropRight - cropLeft.value.toInt()
-//    val croppedHeight = cropBottom - cropTop.value.toInt()
-
-    val croppedBitmap = Bitmap.createBitmap(photoBitmap,cropBoxWidth.value.toInt(), cropBoxHeight.value.toInt(), boxWidth, boxHeight, null, false)
-    val canvas = Canvas(croppedBitmap)
-//    canvas.drawBitmap(
-//        photoBitmap,
-//        Rect(cropLeft.value.toInt(), cropTop.value.toInt(), cropRight, cropBottom),
-//        Rect(0, 0, croppedWidth, croppedHeight),
-//        null
-//    )
-
-    return croppedBitmap
-//    val croppedBitmap = Bitmap.createBitmap(photoBitmap, left, top, right, bottom)
-//    val canvas = Canvas(croppedBitmap)
-//    canvas.drawBitmap(photoBitmap, matrix, null)
-//val bitmaps = bitmap!!.asImageBitmap()
-
-//    val cropX = 0
-//    val cropY = 0
-//
-//    // Ensure that the crop box is within the image boundaries
-////    val croppedX = cropX.coerceIn(0f, (bitmaps.width - cropBoxWidth.value))
-////    val croppedY = cropY.coerceIn(0f, (bitmaps.height - cropBoxHeight.value))
-//if (bitmaps.height == 0 || bitmap.width == 0){
-//   Log.d(TAG, "bitmap height")
-//}
-//    if (cropBoxHeight.value.toInt() == 0){
-//        Toast.makeText(context, "cropheight height", Toast.LENGTH_SHORT).show()
-//    }
-//   val cropBoxRect = Rect(
-//        cropX,
-//        cropY,
-//        (cropX + cropBoxWidth.value).toInt(),
-//        (cropY + cropBoxHeight.value).toInt()
-//    )
-//
-//
-//
-//
-//    val croppedBitmap = Bitmap.createBitmap(bitmaps.asAndroidBitmap(), cropBoxRect.left, cropBoxRect.top, cropBoxRect.width(), cropBoxRect.height())
-//    // Calculate the position of the crop box within the image
-//    var left = max(0.dp, min(offsetX.dp, (bitmap!!.width.dp - cropBoxWidth)))
-//    val top = max(0.dp, min(offsetY.dp, (bitmap.height.dp - cropBoxHeight)))
-//    val right = min(
-//        bitmap.width.dp,
-//        left + cropBoxWidth
-//    )
-//    val bottom = min(
-//        bitmap.height.dp,
-//        top + cropBoxHeight
-//    )
-//
-//    // Calculate the dimensions of the crop box
-//    val cropWidth = right - left
-//    val cropHeight = bottom - top
-//
-//    if (cropWidth > 0.dp && cropHeight > 0.dp) {
-//        val sourceRect = Rect(
-//            left.value.toInt(),
-//            top.value.toInt(),
-//            right.value.toInt(),
-//            bottom.value.toInt()
-//        )
-//    }
-//
-//        Canvas(modifier = Modifier.fillMaxSize()) {
-//            drawIntoCanvas { canvas ->
-//
-//                // Draw the image
-//                val scale = size.width / bitmap.width
-//                canvas.drawImage(
-//                    image = bitmap.asImageBitmap(),
-//                    topLeftOffset = Offset.Zero,
-//                    paint = Paint()
-//                )
-//
-//                // Calculate the position of the crop box
-//                val left = (size.width - cropBoxWidth.toPx()) / 2
-//                val top = (size.height - cropBoxHeight.toPx()) / 2
-//                val right = left + cropBoxWidth.toPx()
-//                val bottom = top + cropBoxHeight.toPx()
-//
-//                // Draw the crop box
-//                val cropBoxColor = Color(0x80000000)
-//                drawRect(
-//                    color = cropBoxColor,
-//                    topLeft = Offset(0f, 0f),
-//                    size = Size(size.width, top)
-//                )
-//                drawRect(
-//                    color = cropBoxColor,
-//                    topLeft = Offset(0f, top),
-//                    size = Size(left, cropBoxHeight.toPx())
-//                )
-//                drawRect(
-//                    color = cropBoxColor,
-//                    topLeft = Offset(right, top),
-//                    size = Size(size.width - right, cropBoxHeight.toPx())
-//                )
-//                drawRect(
-//                    color = cropBoxColor,
-//                    topLeft = Offset(0f, bottom),
-//                    size = Size(size.width, size.height - bottom)
-//                )
-//
-//            }
-//
-//        }
-//        val croppedBitmap = bitmap.copy(sourceRect)
-
-
-//
-//    val cropLeft = (boxSize - cropBoxWidth) / 2
-//    val cropTop = (boxSize - cropBoxHeight) / 2
-//    val cropRight = cropLeft + cropBoxWidth
-//    val cropBottom = cropTop + cropBoxHeight
-//
-//   val photoBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
-//   photoBitmap.asImageBitmap()
-//
-//
-//    val croppedBitmap =Bitmap.createBitmap(
-//        ((cropRight - cropLeft).value * density).toInt(),
-//        ((cropBottom - cropTop).value * density).toInt(),
-//        Bitmap.Config.ARGB_8888
-//    )
-//
-//    val srcRect: android.graphics.Rect? = Rect(
-//        (cropLeft * density).value.toInt(),
-//        (cropTop * density).value.toInt(),
-//        (cropRight * density).value.toInt(),
-//        (cropBottom * density).value.toInt()
-//    )
-//    val destRect = Rect(0, 0, (croppedBitmap.width), (croppedBitmap.height))
-//
-//
-//    val canvas = android.graphics.Canvas(croppedBitmap)
-//    canvas.drawBitmap(photoBitmap, srcRect, destRect, null)
-
-//        return croppedBitmap
-
-//
-//    Canvas(
-//        modifier = Modifier
-//            .background(Color.White)
-//            .fillMaxSize()
-//    ) {
-//        drawIntoCanvas { canvas ->
-//            // Calculate the scale factor to convert Dp to pixels
-//            val density = density
-//
-//            // Draw the cropped portion of the source bitmap onto the canvas
-//            canvas.nativeCanvas.drawBitmap(
-//                photoBitmap.asAndroidBitmap(),
-//                srcRect = srcRect,
-//                destRect = destRect,
-//                null
-//            )
-//
-//        }
-//    }
-
-        // Calculate crop coordinates
-//    val cropLeft = (cropBoxSize / 2).coerceAtLeast(0.dp)
-//    val cropTop = (cropBoxSize / 2).coerceAtLeast(0.dp)
-//    val cropRight = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
-//    val cropBottom = (boxSize - cropBoxSize / 2).coerceAtLeast(0.dp)
-
-//    // Calculate the width and height of the cropped area
-//    val croppedWidth = (cropRight - cropLeft).value.toInt()
-//    val croppedHeight = (cropBottom - cropTop).value
-//
-//    val scale = (photoBitmap.width / croppedWidth)
-//
-//    val painter = remember {
-//        BitmapPainter(
-//             image = photoBitmap ,
-//            srcOffset = IntOffset((cropLeft * scale).value.toInt(), (cropTop * scale).value.toInt()),
-//            srcSize = IntSize(photoBitmap.width.toInt() / scale, photoBitmap.height / scale)
-//        )
-//    }
-
-
-
-
-}
 
 
 
