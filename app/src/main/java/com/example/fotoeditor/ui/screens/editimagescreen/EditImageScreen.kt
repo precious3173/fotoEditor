@@ -278,6 +278,7 @@ fun EditImageMode(
     uiState: EditImageUiState,
     isCropping: Boolean
 ) {
+    var rotationState by remember { mutableStateOf(0f) }
     when(selectToolId){
         1 -> {
             onEvent(EditImageEvent.shouldShowCropOptions(
@@ -346,8 +347,9 @@ fun EditImageMode(
 
             Spacer(modifier = Modifier.width(15.dp))
             IconButton(onClick = {
+                rotationState += 45f
                 onEvent(EditImageEvent.ShouldRotateImage(
-                    !uiState.rotateImage
+                    !uiState.rotateImage, rotationState
                 ))
             }) {
                 Icon(painterResource(id =  R.drawable.icon_rotate)
@@ -618,7 +620,7 @@ private fun EditImageContent(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .align(Alignment.Center)
-                                        .graphicsLayer(rotationZ = rotationState),
+                                        .graphicsLayer(rotationZ = uiState.rotateImageValue),
                                     contentScale = ContentScale.Fit,
                                     colorFilter = colorFilter,
 
@@ -722,19 +724,19 @@ private fun EditImageContent(
 
                 }
                 }
+//
+//    if (uiState.rotateImage){
+//        Toast.makeText(context, "$rotationState", Toast.LENGTH_SHORT).show()
+//        LaunchedEffect(key1 ="" ,){
+//            coroutineScope.launch {
+//                rotationState  += 45f
+//                delay(1000)
+//                !uiState.rotateImage
+//            }
+//        }
 
-    if (uiState.rotateImage){
-        Toast.makeText(context, "$rotationState", Toast.LENGTH_SHORT).show()
-        LaunchedEffect(key1 ="" ,){
-            coroutineScope.launch {
-                rotationState  += 45f
-                delay(1000)
-                !uiState.rotateImage
-            }
-        }
 
-
-    }
+//    }
 
 
     }
