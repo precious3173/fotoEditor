@@ -87,7 +87,7 @@ import java.io.IOException
 import kotlin.math.roundToInt
 
 
-@SuppressLint("UseCompatLoadingForDrawables")
+@SuppressLint("UseCompatLoadingForDrawables", "SuspiciousIndentation")
 @Composable
 fun EditImageRoute(
     toolId: String?,
@@ -323,6 +323,31 @@ fun EditImageMode(
                 ))
             }) {
                 Icon(painterResource(id =  R.drawable.cropselected)
+                    , contentDescription = null,
+                    tint = Color.Gray
+                )
+            }
+        }
+
+        4 -> {
+            onEvent(EditImageEvent.shouldShowCropOptions(
+                false
+            ))
+
+            IconButton(onClick = {
+
+            }) {
+                Icon(painterResource(id =  R.drawable.baseline_flip_24)
+                    , contentDescription = null,
+                    tint = Color.Gray
+                )
+            }
+
+            Spacer(modifier = Modifier.width(15.dp))
+            IconButton(onClick = {
+
+            }) {
+                Icon(painterResource(id =  R.drawable.icon_rotate)
                     , contentDescription = null,
                     tint = Color.Gray
                 )
