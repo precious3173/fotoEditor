@@ -2,6 +2,7 @@ package com.example.fotoeditor.ui.screens.editimagescreen
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
@@ -36,7 +37,8 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.ShouldSendCropped -> shouldSendCroppedBitmap(event.boolean)
             is EditImageEvent.IsFreeMode -> isFreeMode(event.boolean)
             is EditImageEvent.IsNotFreeMode -> isNotFreeMode(event.boolean)
-            is EditImageEvent.ShouldRotateImage -> shouldRotateImage(event.boolean, event.rotateImageValue)
+            is EditImageEvent.ShouldRotateImage -> shouldRotateImage( event.rotateImageValue)
+            is EditImageEvent.SaveImageBitmap -> saveImageBitmap(event.bitmap)
         }
     }
 
@@ -88,10 +90,9 @@ class EditImageViewModel @Inject constructor(
         }
     }
 
-    private fun shouldRotateImage(boolean: Boolean, rotateImageValue: Float){
+    private fun shouldRotateImage( rotateImageValue: Float){
         _uiState.update {
             it.copy(
-                rotateImage = boolean,
                 rotateImageValue = rotateImageValue
 
             )
@@ -122,6 +123,14 @@ class EditImageViewModel @Inject constructor(
             )
         }
     }
+
+    private fun saveImageBitmap(bitmap: Bitmap){
+_uiState.update {
+    it.copy(
+        getBitmap = bitmap
+    )
+}
+    }
 }
 
 sealed interface EditImageEvent : Event {
@@ -138,6 +147,7 @@ sealed interface EditImageEvent : Event {
     data class ShouldSendCropped(val boolean: Boolean): EditImageEvent
     data class IsFreeMode(val boolean: Boolean): EditImageEvent
     data class IsNotFreeMode(val boolean: Boolean): EditImageEvent
-    data class ShouldRotateImage(val boolean: Boolean, val rotateImageValue: Float): EditImageEvent
+    data class ShouldRotateImage(val rotateImageValue: Float): EditImageEvent
+    data class SaveImageBitmap(val bitmap: Bitmap): EditImageEvent
 
 }

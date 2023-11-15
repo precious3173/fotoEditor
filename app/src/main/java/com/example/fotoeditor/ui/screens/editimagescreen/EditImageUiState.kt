@@ -1,6 +1,7 @@
 package com.example.fotoeditor.ui.screens.editimagescreen
 
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
@@ -18,5 +19,6 @@ data class EditImageUiState(
     var isFreeMode: Boolean = false,
     var isNotFreeMode: Boolean = false,
     var rotateImage: Boolean = false,
-    var rotateImageValue: Float = 0f
+    var rotateImageValue: Float = 0f,
+    var getBitmap: Bitmap?= null
 )

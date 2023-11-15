@@ -279,6 +279,12 @@ fun EditImageMode(
     isCropping: Boolean
 ) {
     var rotationState by remember { mutableStateOf(0f) }
+    var bitmap by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    val context = LocalContext.current
+
     when(selectToolId){
         1 -> {
             onEvent(EditImageEvent.shouldShowCropOptions(
@@ -349,8 +355,22 @@ fun EditImageMode(
             IconButton(onClick = {
                 rotationState += 45f
                 onEvent(EditImageEvent.ShouldRotateImage(
-                    !uiState.rotateImage, rotationState
+                     rotationState
                 ))
+
+                try {
+                    val imageBitmap = uiState.imagePreview!!.toBitmap(context)
+                    bitmap = SaveRotateBitmap.SaveRotateBitmap.rotateBitmap(
+                        context, uiState.rotateImageValue,
+                        imageBitmap!!
+                    )
+                    onEvent(EditImageEvent.SaveImageBitmap(bitmap
+                    !!))
+                }catch (e: Exception){
+                  e.stackTrace
+                }
+
+
             }) {
                 Icon(painterResource(id =  R.drawable.icon_rotate)
                     , contentDescription = null,
@@ -700,6 +720,9 @@ private fun EditImageContent(
 
                     try {
                         if (croppedBitmap != null){ imageBitmap = croppedBitmap
+                        }
+                        else{
+                            imageBitmap = uiState.getBitmap
                         }
 
                         val uri =convertToUri(imageBitmap!!, context)
