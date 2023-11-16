@@ -189,8 +189,8 @@ fun EditImageRoute(
                                     }
 
                                     editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
-                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
-                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
+                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(false))
+//                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
 
 
                                 }) {
@@ -319,7 +319,6 @@ fun EditImageMode(
 
 
         3 ->{
-
 
             onEvent(EditImageEvent.shouldShowCropOptions(
                 true
@@ -588,49 +587,6 @@ private fun EditImageContent(
                                     }
 
 
-//                            }else if (uiState.isNotFreeMode){
-//
-//                                AndroidView(
-//                                    modifier = Modifier
-//                                        .align(Alignment.Center),
-//                                    factory = {
-//                                            context ->
-//
-//
-//                                        cropImageView.apply {
-//
-//
-//                                            isAutoZoomEnabled = true
-//                                            setImageUriAsync(imageUri)
-//                                            setAspectRatio(aspectRatio.first, aspectRatio.second)
-//                                            Toast.makeText(context, "${aspectRatio.second}", Toast.LENGTH_SHORT).show()
-//
-//                                            setOnCropImageCompleteListener {
-//                                                    _, result ->
-//
-//
-//                                            }
-//                                        }
-//                                    }
-//                                )
-//
-//
-//
-//                                val maxSize = maxOf(imageWidth.dp, imageHeight.dp)
-//
-//                                cropImage = rememberLauncherForActivityResult(CropImageContract()) { result ->
-//                                    if (result.isSuccessful) {
-//                                        // Use the returned uri.
-//                                        val uriContent = result.uriContent
-//                                        val uriFilePath = result.getUriFilePath(context) // optional usage
-//                                    } else {
-//                                        // An error occurred.
-//                                        val exception = result.error
-//                                    }
-//
-//
-//
-//                                }
                             }
                                 else{
 

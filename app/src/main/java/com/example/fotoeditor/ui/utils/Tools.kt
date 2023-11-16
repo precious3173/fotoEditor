@@ -42,26 +42,26 @@ object ToolLibrary {
             icon = R.drawable.icon_rotate,
         ),
 
-        Tool(
-            id = 5,
-            name = "Vintage",
-            icon = R.drawable.icon_vintage,
-        ),
-        Tool(
-            id = 6,
-            name = "Lens Blur",
-            icon = R.drawable.icon_lens_blur,
-        ),
-        Tool(
-            id = 7,
-            name = "Text",
-            icon = R.drawable.text,
-        ),
-        Tool(
-            id = 8,
-            name = "Frames",
-            icon = R.drawable.frame,
-        ),
+//        Tool(
+//            id = 5,
+//            name = "Vintage",
+//            icon = R.drawable.icon_vintage,
+//        ),
+//        Tool(
+//            id = 6,
+//            name = "Lens Blur",
+//            icon = R.drawable.icon_lens_blur,
+//        ),
+//        Tool(
+//            id = 7,
+//            name = "Text",
+//            icon = R.drawable.text,
+//        ),
+//        Tool(
+//            id = 8,
+//            name = "Frames",
+//            icon = R.drawable.frame,
+//        ),
 //        Tool(
 //            id = 7,
 //            name = "Perspective",
