@@ -145,23 +145,6 @@ class HomeScreenViewModel @Inject constructor(
     private fun onFilterSelectedForUSe (uriImport: Uri?, bitmap: Bitmap?, colorFilterArray: FloatArray) {
     if (_uiState.value.saveUri)  {
 
-//        val getColorMatrix = uiState.value.savedColorMatrix
-//
-//// Create a FloatArray to hold the matrix values
-//        var floatArray = FloatArray(0)
-//
-//        if (colorFilterArray != null){
-//
-//            System.arraycopy(colorFilterArray, 0, floatArray, 0, 20)
-//        } else {
-//            // Manually extract the matrix values from getColorMatrix
-//            for (row in 0 until 4) {
-//                for (col in 0 until 5) {
-//                    floatArray[row * 5 + col] = getColorMatrix!!.get(row, col)
-//                }
-//            }
-//
-//        }
 
         if (bitmap == null){
             Toast.makeText(context, "bitmap is empty", Toast.LENGTH_SHORT).show()
@@ -181,10 +164,11 @@ class HomeScreenViewModel @Inject constructor(
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val outputFileName = "filtered_image_$timeStamp.jpg"
 
-            val storageDirectory = File(Environment.getExternalStorageDirectory(), "fotoeditor")
+            val storageDirectory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "fotoeditor")
             storageDirectory.mkdirs() // Create the directory if it doesn't exist
 
             val outputFilePath = File(storageDirectory, outputFileName).absolutePath
+
 
 
             try {
@@ -226,16 +210,16 @@ class HomeScreenViewModel @Inject constructor(
 
                     _uiState.update { it.copy(filterSelectedForUSe = uri) }
 
-                    Toast.makeText(context, "uri is not empty", Toast.LENGTH_SHORT).show()
+                  Toast.makeText(context, "uri is not empty", Toast.LENGTH_SHORT).show()
                 }
                 else {
                     _uiState.update { it.copy(filterSelectedForUSe = uriImport) }
-                    Toast.makeText(context, "uri is empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "uri is empty", Toast.LENGTH_SHORT).show()
                 }
 
 
             } catch (e: Exception) {
-                Toast.makeText(context, "Error saving the image.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
             }
        }

@@ -959,7 +959,7 @@ private fun HomeScreenContent(
                                                             )
                                                         )
                                                         coroutineScope.launch {
-                                                            delay(2000L)
+                                                            delay(500L)
                                                             onEvent(
                                                                 HomeScreenEvent.UpdateFilter(
                                                                     bitmap = bitmap,
