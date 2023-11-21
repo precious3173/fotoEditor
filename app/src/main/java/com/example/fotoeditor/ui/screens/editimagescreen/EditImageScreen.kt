@@ -341,16 +341,16 @@ fun EditImageMode(
                 false
             ))
 
-            IconButton(onClick = {
-
-            }) {
-                Icon(painterResource(id =  R.drawable.baseline_flip_24)
-                    , contentDescription = null,
-                    tint = Color.Gray
-                )
-            }
-
-            Spacer(modifier = Modifier.width(15.dp))
+//            IconButton(onClick = {
+//
+//            }) {
+//                Icon(painterResource(id =  R.drawable.baseline_flip_24)
+//                    , contentDescription = null,
+//                    tint = Color.Gray
+//                )
+//            }
+//
+//            Spacer(modifier = Modifier.width(15.dp))
             IconButton(onClick = {
                 rotationState += 45f
                 onEvent(EditImageEvent.ShouldRotateImage(
