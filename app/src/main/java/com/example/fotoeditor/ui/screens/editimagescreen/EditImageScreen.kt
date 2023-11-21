@@ -205,6 +205,7 @@ fun EditImageRoute(
                             abort = {
                                 IconButton(onClick = {
                                navigator.navigateTo(Screen.HomeScreen.route)
+                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(false))
 
                                 }) {
                                     Icon(
