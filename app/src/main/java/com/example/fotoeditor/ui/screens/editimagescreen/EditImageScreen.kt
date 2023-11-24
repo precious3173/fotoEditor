@@ -188,7 +188,7 @@ fun EditImageRoute(
                                         e.stackTrace
                                     }
 
-                                    editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
+                                editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
                                     editImageViewModel.onEvent(EditImageEvent.IsFreeMode(false))
 //                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
 
@@ -520,7 +520,6 @@ private fun EditImageContent(
                             imageBitmap?.let {
 
 
-
                             if (uiState.isFreeMode) {
 
 
@@ -590,6 +589,7 @@ private fun EditImageContent(
 
                             }
                                 else{
+
 
                                 Image(
                                     bitmap = it.asImageBitmap(),
@@ -678,7 +678,7 @@ private fun EditImageContent(
                     try {
                         if (croppedBitmap != null){ imageBitmap = croppedBitmap
                         }
-                        else{
+                        else if (uiState.getBitmap != null){
                             imageBitmap = uiState.getBitmap
                         }
 
@@ -699,10 +699,8 @@ private fun EditImageContent(
                         e.stackTrace
                     }
 
-
-
-
                 }
+
                 }
 //
 //    if (uiState.rotateImage){

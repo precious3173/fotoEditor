@@ -39,6 +39,7 @@ class EditImageViewModel @Inject constructor(
             is EditImageEvent.IsNotFreeMode -> isNotFreeMode(event.boolean)
             is EditImageEvent.ShouldRotateImage -> shouldRotateImage( event.rotateImageValue)
             is EditImageEvent.SaveImageBitmap -> saveImageBitmap(event.bitmap)
+            is EditImageEvent.SaveRotatedImage -> saveRotatedImage(event.boolean)
         }
     }
 
@@ -131,6 +132,14 @@ _uiState.update {
     )
 }
     }
+
+    private fun saveRotatedImage(boolean: Boolean){
+        _uiState.update {
+            it.copy(
+                rotateImage = boolean
+            )
+        }
+    }
 }
 
 sealed interface EditImageEvent : Event {
@@ -149,5 +158,7 @@ sealed interface EditImageEvent : Event {
     data class IsNotFreeMode(val boolean: Boolean): EditImageEvent
     data class ShouldRotateImage(val rotateImageValue: Float): EditImageEvent
     data class SaveImageBitmap(val bitmap: Bitmap): EditImageEvent
+    data class  SaveRotatedImage(val boolean: Boolean): EditImageEvent
+
 
 }
