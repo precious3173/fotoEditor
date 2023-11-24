@@ -190,7 +190,7 @@ fun EditImageRoute(
 
                                 editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
                                     editImageViewModel.onEvent(EditImageEvent.IsFreeMode(false))
-//                                    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
+                                //    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
 
 
                                 }) {
@@ -597,6 +597,7 @@ private fun EditImageContent(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .align(Alignment.Center)
+                                        .background(Color.Black)
                                         .graphicsLayer(rotationZ = uiState.rotateImageValue),
                                     contentScale = ContentScale.Fit,
                                     colorFilter = colorFilter,
@@ -674,6 +675,12 @@ private fun EditImageContent(
 
                 if (uiState.isBitmapCropped) {
                     val croppedBitmap = cropImageView.getCroppedImage()
+                    var savedColorArray: FloatArray? = null
+                    if (homeUiState.savedColorArray == null){
+                        savedColorArray = SelectFilter(
+                            index = 0 )
+                    }
+
 
                     try {
                         if (croppedBitmap != null){ imageBitmap = croppedBitmap
@@ -683,10 +690,11 @@ private fun EditImageContent(
                         }
 
                         val uri =convertToUri(imageBitmap!!, context)
-                        onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
+                       // onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
                         if (uri != null
                         ){
                             homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
+                            homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(savedColorArray!!,uri, imageBitmap))
 //                       homeUiState.importedImageUri = uri
                             Log.d(TAG, "uri is not null")
                         }
