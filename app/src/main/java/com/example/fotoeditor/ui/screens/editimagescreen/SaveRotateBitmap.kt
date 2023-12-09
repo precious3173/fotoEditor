@@ -13,8 +13,6 @@ class SaveRotateBitmap {
             val matrix = Matrix().apply { postRotate(rotationAngle) }
             val bitmaps = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 
-             uiState(EditImageEvent.SaveImageBitmap(bitmaps))
-
              return bitmaps
         }
     }

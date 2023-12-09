@@ -91,6 +91,7 @@ fun EditImageRoute(
     val TAG = "EditImage"
     val uiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
     val homeScreenUiState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "AnimatedProgress")
     var showCropOption by remember { mutableStateOf( false)}
     var isCropping by remember { mutableStateOf(false) }
@@ -180,7 +181,12 @@ fun EditImageRoute(
                                         e.stackTrace
                                     }
 
-                                editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
+                                    coroutineScope.launch {
+                                        editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(!uiState.isBitmapCropped))
+                                        delay(1000)
+                                        editImageViewModel.onEvent(EditImageEvent.ShouldSendCropped(false))
+                                    }
+
                                     editImageViewModel.onEvent(EditImageEvent.IsFreeMode(false))
                                 //    editImageViewModel.onEvent(EditImageEvent.IsFreeMode(!uiState.isNotFreeMode))
 
@@ -350,22 +356,27 @@ fun EditImageMode(
 //            }
 //
 //            Spacer(modifier = Modifier.width(15.dp))
+
             IconButton(onClick = {
-                shouldRotateImage = !shouldRotateImage
-                if (shouldRotateImage){
-                scope.launch {
-                   rotationState += 90f
-                    rotationState %= 360f
-
-                    delay(1000)
-                    shouldRotateImage = !shouldRotateImage
-                }
-                }
-
                 onEvent(EditImageEvent.ShouldRotateImage(
-                     rotationState
+                    rotationState
                 ))
+                   rotationState += 90f
+                if (rotationState >= 360) {
+                    rotationState = 0f;
+                }
+                   // rotationState %= 360f
+          try {
 
+              val rotateBitmap = SaveRotateBitmap.SaveRotateBitmap.rotateBitmap(
+                  context, uiState.rotateImageValue, bitmap!!, onEvent
+
+              )
+              onEvent(EditImageEvent.SaveImageBitmap(rotateBitmap))
+          }
+          catch (e: Exception){
+              e.stackTrace
+          }
 
             }) {
                 Icon(painterResource(id =  R.drawable.icon_rotate)
@@ -668,12 +679,9 @@ private fun EditImageContent(
 
 
 
-                val rotateBitmap = SaveRotateBitmap.SaveRotateBitmap.rotateBitmap(
-                    context, uiState.rotateImageValue, imageBitmap!!, onEvent
-
-                )
 
                 if (uiState.isBitmapCropped) {
+
 
                     val croppedBitmap = cropImageView.getCroppedImage()
                     var savedColorArray: FloatArray? = null
@@ -684,15 +692,14 @@ private fun EditImageContent(
 
 
                     try {
-                        imageBitmap = if (rotateBitmap != null){
-                            rotateBitmap
-                        }
-                        else if (croppedBitmap != null){
+                        imageBitmap = if (croppedBitmap != null){
                             croppedBitmap
-                        } else if (uiState.getBitmap != null){
+                        }
+                        else if (uiState.getBitmap != null) {
                             uiState.getBitmap
-                        } else {
-                            imageBitmap
+                        }
+                        else{
+                            imageUri!!.toBitmap(context)
                         }
 
 
