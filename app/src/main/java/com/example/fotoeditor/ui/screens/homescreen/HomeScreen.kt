@@ -65,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -100,6 +101,8 @@ import com.example.fotoeditor.ui.utils.Event
 import com.example.fotoeditor.ui.utils.ExportLibrary
 import com.example.fotoeditor.ui.utils.HomeMenuDefaults
 import com.example.fotoeditor.ui.screens.Settings.ThemeManager
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageUiState
+import com.example.fotoeditor.ui.screens.editimagescreen.EditImageViewModel
 import com.example.fotoeditor.ui.utils.ToolLibrary
 import com.example.fotoeditor.ui.utils.toBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -112,7 +115,11 @@ import kotlin.Exception
 @SuppressLint("Recycle", "IntentReset")
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
+fun HomeRoute(
+    navigator: Navigator,
+    viewModel: HomeScreenViewModel,
+    editImageViewModel: EditImageViewModel
+) {
     val context = LocalContext.current
     var backgroundColor: Color? = null
     var textColor: Color? = null
@@ -130,6 +137,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
     var isVisible by remember { mutableStateOf(false) }
     var isUiState by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val editImageUiState by editImageViewModel.uiState.collectAsStateWithLifecycle()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
 
@@ -278,7 +287,8 @@ fun HomeRoute(navigator: Navigator, viewModel: HomeScreenViewModel) {
                     isDarkTheme = isDarkTheme,
                     shouldExpandTools = uiState.shouldExpandTools,
                     backgroundColor = backgroundColor,
-                    uiState = uiState
+                    uiState = uiState,
+                    editImageUiState = editImageUiState
 
                     )
             },
@@ -630,7 +640,8 @@ private fun HomeScreen(
     isDarkTheme: Boolean,
     shouldExpandTools: Boolean,
     backgroundColor: Color,
-    uiState: HomeUiState
+    uiState: HomeUiState,
+    editImageUiState: EditImageUiState
 
 ) {
     val offset = 20
@@ -680,7 +691,8 @@ private fun HomeScreen(
             shouldExpandTools = shouldExpandTools,
             navigator = navigator,
             backgroundColor = backgroundColor,
-            uiState = uiState
+            uiState = uiState,
+            editImageUistate = editImageUiState
         )
     }
 }
@@ -703,9 +715,10 @@ private fun HomeScreenContent(
     isUiState: Boolean,
     textColor: Color,
     shouldExpandTools: Boolean,
-     navigator: Navigator,
+    navigator: Navigator,
     backgroundColor: Color,
-    uiState: HomeUiState
+    uiState: HomeUiState,
+    editImageUistate: EditImageUiState
 
 
 ) {
@@ -788,6 +801,7 @@ private fun HomeScreenContent(
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .animateContentSize()
+                                    .rotate(editImageUistate.rotateImageValue)
                                     .weight(1f),
                                 colorFilter = ColorFilter.colorMatrix(
                                     savedColorMatrix

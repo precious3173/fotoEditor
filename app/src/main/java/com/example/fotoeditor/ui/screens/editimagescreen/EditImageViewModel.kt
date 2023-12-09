@@ -1,6 +1,5 @@
 package com.example.fotoeditor.ui.screens.editimagescreen
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri

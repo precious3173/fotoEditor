@@ -39,7 +39,9 @@ fun NavigationController() {
         }
 
         fotoComposable(Screen.HomeScreen.route) {
-            HomeRoute(navigator = appNavigator, viewModel = homeScreenViewModel)
+            HomeRoute(navigator = appNavigator,
+                viewModel = homeScreenViewModel,
+                editImageViewModel = editImageViewModel)
         }
 
         fotoComposable(Screen.SettingsScreen.route){

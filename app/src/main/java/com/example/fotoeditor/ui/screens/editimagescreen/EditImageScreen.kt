@@ -7,12 +7,9 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
-import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,12 +21,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -46,18 +39,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.viewinterop.AndroidView
@@ -279,10 +271,16 @@ fun EditImageMode(
     uiState: EditImageUiState,
     isCropping: Boolean
 ) {
-    var rotationState by remember { mutableStateOf(0f) }
+
+    var rotationState by remember {
+        mutableStateOf(0f)
+    }
+    val scope = rememberCoroutineScope()
+
     var bitmap by remember {
         mutableStateOf<Bitmap?>(null)
     }
+    var shouldRotateImage by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -353,22 +351,20 @@ fun EditImageMode(
 //
 //            Spacer(modifier = Modifier.width(15.dp))
             IconButton(onClick = {
-                rotationState += 45f
+                shouldRotateImage = !shouldRotateImage
+                if (shouldRotateImage){
+                scope.launch {
+                   rotationState += 90f
+                    rotationState %= 360f
+
+                    delay(1000)
+                    shouldRotateImage = !shouldRotateImage
+                }
+                }
+
                 onEvent(EditImageEvent.ShouldRotateImage(
                      rotationState
                 ))
-
-                try {
-                    val imageBitmap = uiState.imagePreview!!.toBitmap(context)
-                    bitmap = SaveRotateBitmap.SaveRotateBitmap.rotateBitmap(
-                        context, uiState.rotateImageValue,
-                        imageBitmap!!
-                    )
-                    onEvent(EditImageEvent.SaveImageBitmap(bitmap
-                    !!))
-                }catch (e: Exception){
-                  e.stackTrace
-                }
 
 
             }) {
@@ -598,7 +594,7 @@ private fun EditImageContent(
                                         .fillMaxSize()
                                         .align(Alignment.Center)
                                         .background(Color.Black)
-                                        .graphicsLayer(rotationZ = uiState.rotateImageValue),
+                                        .rotate(uiState.rotateImageValue),
                                     contentScale = ContentScale.Fit,
                                     colorFilter = colorFilter,
 
@@ -672,8 +668,13 @@ private fun EditImageContent(
 
 
 
+                val rotateBitmap = SaveRotateBitmap.SaveRotateBitmap.rotateBitmap(
+                    context, uiState.rotateImageValue, imageBitmap!!, onEvent
+
+                )
 
                 if (uiState.isBitmapCropped) {
+
                     val croppedBitmap = cropImageView.getCroppedImage()
                     var savedColorArray: FloatArray? = null
                     if (homeUiState.savedColorArray == null){
@@ -683,17 +684,23 @@ private fun EditImageContent(
 
 
                     try {
-                        if (croppedBitmap != null){ imageBitmap = croppedBitmap
+                        imageBitmap = if (rotateBitmap != null){
+                            rotateBitmap
                         }
-                        else if (uiState.getBitmap != null){
-                            imageBitmap = uiState.getBitmap
+                        else if (croppedBitmap != null){
+                            croppedBitmap
+                        } else if (uiState.getBitmap != null){
+                            uiState.getBitmap
+                        } else {
+                            imageBitmap
                         }
+
 
                         val uri =convertToUri(imageBitmap!!, context)
                        // onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
                         if (uri != null
                         ){
-                            homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
+//                            homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
                             homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(savedColorArray!!,uri, imageBitmap))
 //                       homeUiState.importedImageUri = uri
                             Log.d(TAG, "uri is not null")
