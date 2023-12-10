@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -679,11 +680,9 @@ private fun EditImageContent(
 
 
 
-
+                val croppedBitmap = cropImageView.getCroppedImage()
                 if (uiState.isBitmapCropped) {
 
-
-                    val croppedBitmap = cropImageView.getCroppedImage()
                     var savedColorArray: FloatArray? = null
                     if (homeUiState.savedColorArray == null){
                         savedColorArray = SelectFilter(
@@ -692,22 +691,23 @@ private fun EditImageContent(
 
 
                     try {
-                        imageBitmap = if (croppedBitmap != null){
-                            croppedBitmap
+                         if (croppedBitmap != null){
+                        imageBitmap=  croppedBitmap
+                            Toast.makeText(context, "not empty", Toast.LENGTH_SHORT).show()
                         }
                         else if (uiState.getBitmap != null) {
-                            uiState.getBitmap
+                            imageBitmap = uiState.getBitmap
                         }
                         else{
-                            imageUri!!.toBitmap(context)
+                           imageBitmap= imageUri!!.toBitmap(context)
                         }
 
 
                         val uri =convertToUri(imageBitmap!!, context)
-                       // onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
+                       onEvent(HomeScreenEvent.SendCroppedBitmap(imageBitmap))
                         if (uri != null
                         ){
-//                            homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
+                          homeScreenViewModel.onEvent(HomeScreenEvent.LoadImageUri(uri))
                             homeScreenViewModel.onEvent(HomeScreenEvent.updateEditColorFilterArray(savedColorArray!!,uri, imageBitmap))
 //                       homeUiState.importedImageUri = uri
                             Log.d(TAG, "uri is not null")
