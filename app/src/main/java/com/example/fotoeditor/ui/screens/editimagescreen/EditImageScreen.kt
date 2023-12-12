@@ -624,7 +624,6 @@ private fun EditImageContent(
                                 1 -> {
                                     onEvent(EditImageEvent.IsFreeMode(!uiState.isFreeMode))
 
-
                                 }
                                 2 -> {
 
@@ -693,7 +692,7 @@ private fun EditImageContent(
                     try {
                          if (croppedBitmap != null){
                         imageBitmap=  croppedBitmap
-                            Toast.makeText(context, "not empty", Toast.LENGTH_SHORT).show()
+
                         }
                         else if (uiState.getBitmap != null) {
                             imageBitmap = uiState.getBitmap
