@@ -6,16 +6,16 @@ plugins {
 }
 
 android {
-    namespace 'com.example.fotoeditor'
+    namespace 'com.fotoEditor.fotoeditor'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.fotoeditor"
+        applicationId "com.fotoEditor.fotoeditor"
         minSdk 21
-        //noinspection ExpiredTargetSdkVersion
-        targetSdk 32
-        versionCode 1
-        versionName "1.0"
+        //noinspection EditedTargetSdkVersion,EditedTargetSdkVersion,ExpiredTargetSdkVersion
+        targetSdk 33
+        versionCode 2
+        versionName "1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

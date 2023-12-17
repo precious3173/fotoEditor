@@ -18,7 +18,7 @@
         android:theme="@style/Theme.FotoEditor"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivbbbity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.FotoEditor">
@@ -35,7 +35,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.fotoEditor.provider"
+            android:authorities="com.fotoEditor.fotoEditor.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -45,5 +45,6 @@
 
 
     </application>
+
 
 </manifest>
